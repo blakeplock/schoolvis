@@ -19,10 +19,10 @@ const assets = new Map([
   ['/lib/worksheet.mjs',['lib/worksheet.mjs','text/javascript; charset=utf-8']],
   ['/data/demo.mjs',['data/demo.mjs','text/javascript; charset=utf-8']],
   ['/data/questions.mjs',['data/questions.mjs','text/javascript; charset=utf-8']],
-  ['/data/aims-seed.mjs',['data/aims-seed.mjs','text/javascript; charset=utf-8']],
+  ['/data/aims-seed.mjs',['data/aims-seed.mjs','text/javascript; charset=utf-8']]
 ]);
 const securityHeaders = {
- 'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self'; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; worker-src 'none'",
+ 'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; worker-src 'none'",
  'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer', 'X-Frame-Options':'DENY',
  'Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Resource-Policy':'same-origin',
  'Permissions-Policy':'camera=(), microphone=(), geolocation=()', 'Cache-Control':'no-store'

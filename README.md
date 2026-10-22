@@ -152,3 +152,7 @@ The interface uses **Crimson Text** for headings and key figures and **Work Sans
 ## v0.8.6 dashboard layout
 
 The overview uses an approximately 42/58 responsive split: audit controls and report filters on the left; live/demo visibility KPIs, comparison bars and topic-level appearance bars on the right. Charts derive exclusively from the active dataset; no synthetic trends or fabricated multi-topic results are introduced for five-question audits. At narrow widths the columns stack.
+
+## v0.8.7: Neutral console interface
+
+This release replaces Crimson Text and Work Sans webfonts with a locally available system sans stack (Inter if installed, system UI otherwise) and a graphite, low-chroma dashboard inspired by professional developer consoles. Headings and metrics use moderate weights; small labels and cards are brighter for readability. No third-party font requests are made and the server CSP stays strict. The school registry, five-question API audit, original records, and dashboard behavior are unchanged. The missing `data/aims-seed.mjs` server asset route remains corrected.
