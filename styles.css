@@ -11,3 +11,24 @@
 .registry-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:auto}
 .registry-actions button{flex:1 1 135px;min-width:0;white-space:normal;line-height:1.3;text-align:center}
 @media(max-width:520px){.registry-list{grid-template-columns:minmax(0,1fr)}.registry-actions button{flex:1 1 auto}}
+
+/* v0.8.2 competitive landscape */
+.landscape-container{min-width:0}.landscape-container+.landscape-container{margin-top:22px}
+.landscape-summary{font-size:12px;color:#617785;margin:0 0 12px}
+.landscape-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 13px}
+.landscape-row{display:flex;align-items:center;gap:14px;justify-content:space-between;min-width:0;border:1px solid #e4ecef;border-radius:9px;padding:12px 14px;background:#fbfdfd}
+.landscape-identity{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.landscape-identity strong{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+.landscape-qualifier{font-size:10px;color:#9b6c2c;line-height:1.25}
+.landscape-status{display:inline-flex;align-items:center;border-radius:20px;background:#ecf2f5;color:#59717d;padding:3px 8px;font-size:10px;font-weight:650}
+.landscape-status.tracked{background:#e1f3ee;color:#167866}.landscape-status.warning{background:#fff3e7;color:#9a6326}
+.landscape-metric{flex:0 0 95px;text-align:right}.landscape-count{font-size:12px;font-weight:750;color:#244657;white-space:nowrap}
+.landscape-track{width:100%;height:7px;margin-top:8px;background:#e4edef;border-radius:99px;overflow:hidden}.landscape-fill{height:100%;background:#3d9294;border-radius:99px}
+.landscape-evidence{border:1px solid #e4eaee;border-radius:10px;background:#f8fafb;padding:17px}
+.landscape-evidence-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.landscape-evidence h3{font-size:14px;margin:0}
+.landscape-evidence-note{font-size:12px;color:#617785;margin:9px 0 12px}.landscape-claims{padding:0;margin:0;list-style:none;display:grid;gap:6px}
+.landscape-claims li{display:flex;align-items:center;gap:10px;border:1px solid #e7edf0;background:#fff;border-radius:6px;padding:10px;font-size:12px;overflow-wrap:anywhere}
+.landscape-question{flex:0 0 auto;background:#eaf0f3;color:#435e6e;border-radius:4px;padding:3px 6px;font:700 10px ui-monospace,monospace}
+.landscape-flag{margin-left:auto;font-size:10px;color:#9a6326;white-space:nowrap}.landscape-disclaimer{font-size:11px;color:#738996;margin:12px 0 0}
+@media(max-width:1000px){.landscape-list{grid-template-columns:1fr}}
+@media(max-width:520px){.landscape-row{padding:10px}.landscape-metric{flex-basis:70px}.landscape-claims li{flex-wrap:wrap}.landscape-flag{margin-left:0}}
