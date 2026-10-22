@@ -139,3 +139,7 @@ The discovery section now presents school candidates as compact two-column cards
 ## v0.8.3: competitive landscape filters
 
 The Discovered competitive landscape offers combinable enrollment (boys/girls/co-ed), religious affiliation, region (Baltimore city+county / DC / other Maryland counties / unknown), and individual county filters, with Reset. The categories are **provisional editorial classifications**, not independently verified institutional facts; unclassified schools remain visible under the Unknown options. Filtering applies to the exploratory discovery list, not the underlying captured responses or metrics, and requires no paid API requests. See `lib/landscape-filters.mjs` for the provisional lookup. Review and attach authoritative school sources before publishing any demographic or affiliation claims.
+
+## v0.8.4: Simplified landscape location filters
+
+The Discovered competitive landscape panel now combines Region and County into a single Location selector. It includes all 23 Maryland counties (even counties not represented in current results), Baltimore City, Washington DC, a Baltimore-metro grouping, statewide Maryland, and Unknown location. Filters are applied to provisional data without new API requests. Empty matches display an explicit message. Enrollment and affiliation controls are unchanged.
