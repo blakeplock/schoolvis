@@ -83,3 +83,15 @@ See [Security](SECURITY.md), [Dependency policy](docs/DEPENDENCIES.md), [Methodo
 ## License
 
 Apache License, Version 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+## v0.3: Run a local five-question live audit (optional, paid API)
+
+The existing fictional demo remains available without an API key. To enable the live pilot on your Mac:
+
+1. Ensure Node.js 22+ and your own OpenAI API key with API billing enabled.
+2. Copy `.env.example` to `.env` in the project directory; replace the placeholder with your API key. Keep `.env` private; it is gitignored. Alternatively set `OPENAI_API_KEY` in your shell environment.
+3. Run `npm ci --ignore-scripts && npm run check && npm start`.
+4. Visit `http://127.0.0.1:4173`. Use the **Run a five-question audit** panel to enter the area and 2–5 school names and official HTTPS websites. Click the button **once**; each run incurs API and web-search usage costs.
+5. The app saves successful audits in `~/.schoolvis/audits/` (local to your Mac) and loads a successful result into the dashboard. **Load last saved audit** retrieves the most recent archived run. Archive files contain excerpts and the longer provider response; protect them accordingly.
+
+**Important limitations:** OpenAI API outputs with web search are not the same as consumer ChatGPT results. The first five questions all cover college preparation. The tool does not validate official school websites, and school-name matching misses alternate naming. Provider web-search/model support and pricing can change; consult OpenAI's current API documentation and usage dashboard. No API key or actual provider calls were available during development, so tests use mock responses only. For methodological disclosures see `docs/METHODOLOGY.md`.

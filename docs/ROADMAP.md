@@ -32,3 +32,12 @@
 - Load testing, security review, privacy/legal review and independent accessibility evaluation
 
 **No future feature should be shown as operational before its implementation and verification.**
+
+## Delivered in v0.3 (local-first pilot)
+
+- Local-only server integration with fixed OpenAI Responses API endpoint and five sequential college-preparation prompts
+- School name, official URL and geographic context setup (no automatic web crawling or verification)
+- Conservative literal full-name extraction, provider citation capture, timestamps and raw answer archive
+- Credential stored in ignored `.env` file on the Mac; archive under `~/.schoolvis/audits` with owner-only file permissions
+- Reload most recent recorded audit into the existing dashboard; mocked tests and zero third-party packages
+- Known gaps: no repeats, browser-consumer equivalence, verified school identity, full-run cost estimate or per-answer confidence

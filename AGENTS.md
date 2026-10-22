@@ -67,3 +67,11 @@ Always run checks after code changes. Explain any unrun test or audit and its er
 - It has no account system, persistent database, hosted tenant isolation, real search benchmarking, billing, or scheduled monitoring.
 - Examples under `example.org` are placeholders, not verified school references.
 - Track the production gaps in `docs/ROADMAP.md`; do not silently imply that planned features are complete.
+
+## Local live-API pilot (v0.3)
+
+- Live API requests run only from a loopback-bound Node server at `127.0.0.1`; never bundle the key with frontend assets.
+- `OPENAI_API_KEY` may come from the local environment or ignored `.env`; do not log, commit, or send it to any endpoint other than `api.openai.com`.
+- Only explicitly triggered batches of five requests are permitted in the pilot. Keep the provider endpoint fixed, and disclose paid API/web-search usage before initiation.
+- Preserve separate local archives for response text and provider metadata; ensure no student data. Results displayed to schools require careful validation and disclosure of API-versus-consumer differences.
+- An HTTP mock test is NOT verification that a current paid provider model supports the selected web-search tool. Confirm against official API documentation and a live opt-in call before describing live compatibility as verified.

@@ -1,45 +1,79 @@
 // SPDX-License-Identifier: Apache-2.0
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-
+import { homedir } from 'node:os';
+import { randomUUID } from 'node:crypto';
+import { validateAuditRequest } from './lib/live-audit.mjs';
+import { runAudit } from './lib/runner.mjs';
 const root = dirname(fileURLToPath(import.meta.url));
+const archive = join(homedir(), '.schoolvis', 'audits');
 const assets = new Map([
-  ['/', ['index.html', 'text/html; charset=utf-8']],
-  ['/index.html', ['index.html', 'text/html; charset=utf-8']],
-  ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
-  ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
-  ['/lib/analysis.mjs', ['lib/analysis.mjs', 'text/javascript; charset=utf-8']],
-  ['/data/demo.mjs', ['data/demo.mjs', 'text/javascript; charset=utf-8']],
-  ['/data/questions.mjs', ['data/questions.mjs', 'text/javascript; charset=utf-8']]
+  ['/', ['index.html','text/html; charset=utf-8']], ['/index.html',['index.html','text/html; charset=utf-8']],
+  ['/styles.css',['styles.css','text/css; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']],
+  ['/lib/analysis.mjs',['lib/analysis.mjs','text/javascript; charset=utf-8']],
+  ['/lib/worksheet.mjs',['lib/worksheet.mjs','text/javascript; charset=utf-8']],
+  ['/data/demo.mjs',['data/demo.mjs','text/javascript; charset=utf-8']],
+  ['/data/questions.mjs',['data/questions.mjs','text/javascript; charset=utf-8']]
 ]);
 const securityHeaders = {
-  'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; worker-src 'none'",
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'no-referrer',
-  'X-Frame-Options': 'DENY',
-  'Cross-Origin-Opener-Policy': 'same-origin',
-  'Cross-Origin-Resource-Policy': 'same-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  'Cache-Control': 'no-store'
+ 'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; worker-src 'none'",
+ 'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer', 'X-Frame-Options':'DENY',
+ 'Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Resource-Policy':'same-origin',
+ 'Permissions-Policy':'camera=(), microphone=(), geolocation=()', 'Cache-Control':'no-store'
 };
-const port = Number(process.env.PORT || 4173);
-const host = process.env.HOST || '127.0.0.1';
+const port = Number(process.env.PORT || 4173); const host = '127.0.0.1';
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PORT');
-const server = createServer(async (req, res) => {
-  const path = req.url?.split('?')[0] || '';
-  const asset = assets.get(path);
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    res.writeHead(405, { ...securityHeaders, Allow: 'GET, HEAD' }); res.end(); return;
+async function loadKey() {
+  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY.trim();
+  // Simple strict single-line .env parser. Never serve .env as an asset.
+  try { const env = await readFile(join(root,'.env'),'utf8'); const match=env.match(/^OPENAI_API_KEY=(?:"([^"]+)"|'([^']+)'|([^\r\n#]+))\s*$/m);return (match?.[1]||match?.[2]||match?.[3]||'').trim(); } catch { return ''; }
+}
+function json(res,status,data){ const body=JSON.stringify(data);res.writeHead(status,{...securityHeaders,'Content-Type':'application/json; charset=utf-8'});res.end(body); }
+async function bodyJson(req) {
+ if ((Number(req.headers['content-length']||0)>12000)) throw new Error('Request too large');
+ let value=''; for await (const chunk of req) { value+=chunk; if (value.length>12000) throw new Error('Request too large'); }
+ return JSON.parse(value);
+}
+let busy=false;
+const server=createServer(async(req,res)=>{
+ const path=req.url?.split('?')[0]||'';
+ // Reject cross-site and DNS rebinding attempts. Intended only for local use.
+ const allowedHost = new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
+ if (!allowedHost.has(req.headers.host)) { json(res,403,{error:'Local host only'});return; }
+ if (path.startsWith('/api/')) {
+  if (req.method==='GET' && path==='/api/status') {json(res,200,{keyConfigured:!!(await loadKey()),busy});return;}
+  if (req.method==='GET' && path==='/api/audits') {
+    try { const names=(await readdir(archive)).filter(x=>/^[a-f0-9-]+\.json$/.test(x)).sort().reverse().slice(0,30);json(res,200,{audits:names.map(name=>name.slice(0,-5))});}
+    catch(e){json(res,200,{audits:[]});} return;
   }
-  if (!asset) { res.writeHead(404, securityHeaders); res.end('Not found'); return; }
-  try {
-    const content = await readFile(join(root, asset[0]));
-    res.writeHead(200, { ...securityHeaders, 'Content-Type': asset[1], 'Content-Length': content.length });
-    res.end(req.method === 'HEAD' ? undefined : content);
-  } catch {
-    res.writeHead(500, securityHeaders); res.end('Internal error');
+  if (req.method==='GET' && /^\/api\/audits\/[a-f0-9-]+$/.test(path)) {
+    try {const id=path.split('/').at(-1);json(res,200,JSON.parse(await readFile(join(archive,id+'.json'),'utf8')));}
+    catch {json(res,404,{error:'Audit not found'});}return;
   }
+  if (req.method==='POST' && path==='/api/audits') {
+    const origin=req.headers.origin;
+    if (origin && origin!==`http://127.0.0.1:${port}` && origin!==`http://localhost:${port}`) {json(res,403,{error:'Invalid origin'});return;}
+    if (req.headers['content-type']?.split(';')[0] !== 'application/json') {json(res,415,{error:'JSON required'});return;}
+    if (busy) {json(res,409,{error:'An audit is already running'});return;}
+    let config;try{config=validateAuditRequest(await bodyJson(req));}catch(e){json(res,400,{error:e.message});return;}
+    const key=await loadKey();if(!key){json(res,400,{error:'Set OPENAI_API_KEY in your local .env first'});return;}
+    busy=true;
+    try {
+      const result=await runAudit(config,key);
+      const id=new Date().toISOString().replace(/[:.]/g,'-')+'-'+randomUUID();
+      await mkdir(archive,{recursive:true,mode:0o700});
+      await writeFile(join(archive,id+'.json'),JSON.stringify(result,null,2),{mode:0o600,flag:'wx'});
+      json(res,200,{id,dataset:result.dataset,metadata:{...result.metadata,captures:undefined}});
+    }catch(e){json(res,502,{error:String(e.message).slice(0,220)+' — Any incomplete run was discarded; check API usage dashboard for incurred costs.'});}
+    finally{busy=false;}return;
+  }
+  json(res,404,{error:'Not found'});return;
+ }
+ if (req.method!=='GET'&&req.method!=='HEAD') {res.writeHead(405,{...securityHeaders,Allow:'GET, HEAD'});res.end();return;}
+ const asset=assets.get(path);if(!asset){res.writeHead(404,securityHeaders);res.end('Not found');return;}
+ try {const content=await readFile(join(root,asset[0]));res.writeHead(200,{...securityHeaders,'Content-Type':asset[1],'Content-Length':content.length});res.end(req.method==='HEAD'?undefined:content);}
+ catch {res.writeHead(500,securityHeaders);res.end('Internal error');}
 });
-server.listen(port, host, () => console.log(`School AI Discovery running at http://${host}:${port}`));
+server.listen(port,host,()=>console.log(`SchoolVis local running at http://${host}:${port}`));
