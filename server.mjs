@@ -18,7 +18,8 @@ const assets = new Map([
   ['/lib/landscape-filters.mjs',['lib/landscape-filters.mjs','text/javascript; charset=utf-8']],
   ['/lib/worksheet.mjs',['lib/worksheet.mjs','text/javascript; charset=utf-8']],
   ['/data/demo.mjs',['data/demo.mjs','text/javascript; charset=utf-8']],
-  ['/data/questions.mjs',['data/questions.mjs','text/javascript; charset=utf-8']]
+  ['/data/questions.mjs',['data/questions.mjs','text/javascript; charset=utf-8']],
+  ['/data/aims-seed.mjs',['data/aims-seed.mjs','text/javascript; charset=utf-8']],
 ]);
 const securityHeaders = {
  'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self'; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; worker-src 'none'",
