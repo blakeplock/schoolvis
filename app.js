@@ -2,6 +2,7 @@
 import { DEMO } from './data/demo.mjs';
 import { validateDataset, summarize } from './lib/analysis.mjs';
 import { createWorksheet } from './lib/worksheet.mjs';
+import { describeSchool, filterSchools, knownCount } from './lib/landscape-filters.mjs';
 
 const el = id => document.getElementById(id);
 const state = { data: DEMO, schoolId: 'harbor', platform: 'ChatGPT', topic: 'All topics', visible: 8, filename: 'synthetic-demo', discovery: null };
@@ -107,11 +108,20 @@ function renderDiscovery() {
     }
   }
   const schools = [...merged.values()].sort((a,b) => b.responses-a.responses || a.name.localeCompare(b.name));
+  const locations = [...new Set(schools.map(s=>describeSchool(s.name).county).filter(c=>c!=='unknown'))].sort();
+  const countyControl=el('landscape-county');const chosenCounty=countyControl.value;
+  countyControl.replaceChildren(option('all','All counties'),...locations.map(c=>option(c,c)),option('unknown','Unknown'));
+  countyControl.value=locations.includes(chosenCounty)||chosenCounty==='unknown'?chosenCounty:'all';
+  const filtered=filterSchools(schools,{gender:el('landscape-gender').value,religion:el('landscape-religion').value,location:el('landscape-location').value,county:countyControl.value});
+  el('landscape-filter-note').textContent=`Showing ${filtered.length} of ${schools.length} discovered names · gender classified for ${knownCount(schools,'gender')} · affiliation classified for ${knownCount(schools,'religion')}. Categories are preliminary, not independently verified; unknown schools remain available under Unknown.`;
+
   const list = document.createElement('div'); list.className = 'landscape-list';
-  for (const school of schools) {
+  for (const school of filtered) {
     const row = document.createElement('div'); row.className = 'landscape-row';
     const details = document.createElement('div'); details.className = 'landscape-identity';
     details.append(text('strong', school.name));
+    const profile=describeSchool(school.name);
+    details.append(text('small',`${profile.gender==='unknown'?'Gender unknown':profile.gender==='coed'?'Co-ed':profile.gender==='boys'?'Boys only':'Girls only'} · ${profile.religion==='unknown'?'Affiliation unknown':profile.religion==='religious'?'Religious':'Nonreligious'} · ${profile.county==='unknown'?'Location unknown':profile.county}`, 'landscape-qualifier'));
     if (school.variants.length > 1) details.append(text('small', 'Combined name variants; total may overlap', 'landscape-qualifier'));
     details.append(text('span', school.tracked ? 'Tracked' : 'Discovered', school.tracked ? 'landscape-status tracked' : 'landscape-status'));
     const metric = document.createElement('div'); metric.className = 'landscape-metric';
@@ -122,7 +132,7 @@ function renderDiscovery() {
     fill.style.width = `${total ? Math.min(100, count / total * 100) : 0}%`;
     track.append(fill); metric.append(track);row.append(details,metric);list.append(row);
   }
-  replace('discovery-list', [text('p', `${schools.length} candidate school names · ${total} recorded responses. These are answer-link appearances, not independently verified recommendations.`, 'landscape-summary'), schools.length ? list : text('p', 'No candidates extracted.', 'empty')]);
+  replace('discovery-list', [text('p', `${schools.length} candidate school names · ${total} recorded responses. These are answer-link appearances, not independently verified recommendations.`, 'landscape-summary'), filtered.length ? list : text('p', 'No candidates match these filters. Reset filters or include Unknown classifications.', 'empty')]);
   const claims = captures.flatMap(c => (c.claims || []).map(x => ({questionId:c.questionId, excerpt:String(x.excerpt || '')})));
   const quality = captures.reduce((v,c) => { v.maps += c.citationSummary?.mapSearchLinks || 0; v.total += c.citationSummary?.total || 0;return v; }, {maps:0,total:0});
   const evidence = document.createElement('div'); evidence.className = 'landscape-evidence';
@@ -267,6 +277,8 @@ async function matchDiscovered() {
  }catch { /* offline imported observations have no lookup service */ }
 }
 function init() {
+  for (const id of ['landscape-gender','landscape-religion','landscape-location','landscape-county']) el(id).addEventListener('change',renderDiscovery);
+  el('landscape-reset').addEventListener('click',()=>{for(const id of ['landscape-gender','landscape-religion','landscape-location','landscape-county'])el(id).value='all';renderDiscovery();});
   validateDataset(state.data); setupOptions(); render(); void auditStatus(); void loadRegistry();
   el('registry-search').addEventListener('input',()=>{void loadRegistry();});
   el('registry-grades').addEventListener('change',()=>{void loadRegistry();});
