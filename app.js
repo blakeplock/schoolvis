@@ -147,7 +147,7 @@ async function auditStatus() {
 }
 function useAudit(dataset, discovery = null) {
   state.discovery = discovery;
-  validateDataset(dataset);state.data=dataset;state.schoolId=dataset.schools[0].id;state.platform='ChatGPT';state.topic='All topics';state.visible=8;setupOptions();render();
+  validateDataset(dataset);state.data=dataset;state.schoolId=dataset.schools[0].id;state.platform='ChatGPT';state.topic='All topics';state.visible=8;setupOptions();render();void matchDiscovered();
 }
 async function runLiveAudit() {
   const lines=el('audit-schools').value.split('\n').map(s=>s.trim()).filter(Boolean);
@@ -164,8 +164,40 @@ async function loadLastAudit(){
   const result=await(await fetch('/api/audits/'+encodeURIComponent(list.audits[0]))).json();useAudit(result.dataset,result.discovery);
   el('audit-message').textContent=`Loaded local archive: ${list.audits[0]}`;}catch(e){el('audit-message').textContent=e.message;}
 }
+// Local registry records are candidates only, never verified school facts.
+let registryResults = [];
+async function loadRegistry() {
+ try {
+  const query=el('registry-search').value.trim();const highSchool=el('registry-grades').value==='high';
+  const res=await fetch('/api/schools?'+new URLSearchParams({q:query,highSchool:String(highSchool)}));
+  if(!res.ok)throw new Error('Registry unavailable');const data=await res.json();registryResults=data.schools;
+  el('registry-count').textContent=`${data.total} listed`;
+  el('registry-status').textContent='Source-listed / not verified current members. Names, grade ranges and websites require independent verification.';
+  const rows=data.schools.slice(0,90).map(s=>{
+   const div=text('div','','registry-row');const info=text('div','');info.append(text('strong',s.name),text('small',`${s.county} · ${s.grades} · Unverified`));
+   const b=text('button','Add to audit','button outline');b.type='button';b.addEventListener('click',()=>{
+    const existing=el('audit-schools').value.trim();const lines=existing?existing.split('\n'):[];
+    if(lines.some(l=>l.split('|')[0].trim().toLowerCase()===s.name.toLowerCase())){el('registry-status').textContent='Already in the audit list.';return;}
+    if(lines.length>=5){el('registry-status').textContent='Audit limit: 5 schools. Remove one first.';return;}
+    el('audit-schools').value=(existing?existing+'\n':'')+`${s.name} | https://REPLACE-WITH-OFFICIAL-WEBSITE`;el('registry-status').textContent='Added. Replace placeholder with the school’s verified official HTTPS website before running.';
+    el('audit-schools').focus();
+   });div.append(info,b);return div;
+  });
+  replace('registry-list',rows.length?rows:[text('p','No matching records.','empty')]);
+  if(data.schools.length>90)el('registry-status').textContent+=` Showing the first 90 of ${data.total}; narrow your search to see others.`;
+ }catch(e){el('registry-status').textContent='Registry requires the running local Node server: '+e.message;}
+}
+async function matchDiscovered() {
+ if(!state.discovery?.schools?.length)return;
+ try {const candidates=state.discovery.schools.map(s=>s.name);const res=await fetch('/api/schools/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({names:candidates})});if(!res.ok)return;
+ const data=await res.json(); const root=el('registry-status');const matched=data.matches.filter(x=>x.school).length;
+ root.textContent=`${matched} of ${data.matches.length} discovered school candidates matched to a preliminary registry entry. Unmatched names require review.`;
+ }catch { /* offline imported observations have no lookup service */ }
+}
 function init() {
-  validateDataset(state.data); setupOptions(); render(); void auditStatus();
+  validateDataset(state.data); setupOptions(); render(); void auditStatus(); void loadRegistry();
+  el('registry-search').addEventListener('input',()=>{void loadRegistry();});
+  el('registry-grades').addEventListener('change',()=>{void loadRegistry();});
   el('run-audit').addEventListener('click',()=>{void runLiveAudit().catch(e=>{el('audit-message').textContent=e.message;});});
   el('load-audit').addEventListener('click',()=>{void loadLastAudit();});
   el('school-select').addEventListener('change', e => { state.schoolId = e.target.value; render(); });

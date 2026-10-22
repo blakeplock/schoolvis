@@ -75,3 +75,11 @@ Always run checks after code changes. Explain any unrun test or audit and its er
 - Only explicitly triggered batches of five requests are permitted in the pilot. Keep the provider endpoint fixed, and disclose paid API/web-search usage before initiation.
 - Preserve separate local archives for response text and provider metadata; ensure no student data. Results displayed to schools require careful validation and disclosure of API-versus-consumer differences.
 - An HTTP mock test is NOT verification that a current paid provider model supports the selected web-search tool. Confirm against official API documentation and a live opt-in call before describing live compatibility as verified.
+
+## v0.5 registry requirements
+
+- The source list is a historical candidate seed, **not** proof of current AIMS membership or school operations.
+- Keep school identity IDs stable. Never merge campuses or rename records automatically without reviewed provenance.
+- Website, grades, county, status and aliases require field-level source verification before customer-facing use.
+- Use SQLite only inside the local service; don't expose arbitrary SQL or allow remote file paths or database statements through APIs.
+- Preserve source and verification status for every seeded record; do not turn AI-generated claims into verified institution facts.

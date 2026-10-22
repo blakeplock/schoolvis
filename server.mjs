@@ -7,6 +7,7 @@ import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { validateAuditRequest } from './lib/live-audit.mjs';
 import { runAudit } from './lib/runner.mjs';
+import { openRegistry, listSchools, matchCandidate } from './lib/registry.mjs';
 const root = dirname(fileURLToPath(import.meta.url));
 const archive = join(homedir(), '.schoolvis', 'audits');
 const assets = new Map([
@@ -36,6 +37,7 @@ async function bodyJson(req) {
  let value=''; for await (const chunk of req) { value+=chunk; if (value.length>12000) throw new Error('Request too large'); }
  return JSON.parse(value);
 }
+const registry = openRegistry();
 let busy=false;
 const server=createServer(async(req,res)=>{
  const path=req.url?.split('?')[0]||'';
@@ -43,6 +45,16 @@ const server=createServer(async(req,res)=>{
  const allowedHost = new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
  if (!allowedHost.has(req.headers.host)) { json(res,403,{error:'Local host only'});return; }
  if (path.startsWith('/api/')) {
+  if (req.method==='GET' && path==='/api/schools') {
+    try { const u=new URL(req.url,`http://127.0.0.1:${port}`);const schools=listSchools(registry,{query:u.searchParams.get('q')||'',county:u.searchParams.get('county')||'',highSchool:u.searchParams.get('highSchool')==='true'});json(res,200,{schools,total:schools.length,source:'Wikipedia association list (not verified current membership)'});}
+    catch(e){json(res,400,{error:e.message});}return;
+  }
+  if (req.method==='POST' && path==='/api/schools/match') {
+    const origin=req.headers.origin; if(origin && ![`http://127.0.0.1:${port}`,`http://localhost:${port}`].includes(origin)){json(res,403,{error:'Invalid origin'});return;}
+    if(req.headers['content-type']?.split(';')[0]!=='application/json'){json(res,415,{error:'JSON required'});return;}
+    try {const v=await bodyJson(req);if(!Array.isArray(v.names)||v.names.length>100||!v.names.every(n=>typeof n==='string'&&n.length<151))throw new Error('Invalid names');json(res,200,{matches:v.names.map(name=>({candidate:name,school:matchCandidate(registry,name)}))});}
+    catch(e){json(res,400,{error:e.message});}return;
+  }
   if (req.method==='GET' && path==='/api/status') {json(res,200,{keyConfigured:!!(await loadKey()),busy});return;}
   if (req.method==='GET' && path==='/api/audits') {
     try { const names=(await readdir(archive)).filter(x=>/^[a-f0-9-]+\.json$/.test(x)).sort().reverse().slice(0,30);json(res,200,{audits:names.map(name=>name.slice(0,-5))});}
