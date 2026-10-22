@@ -86,3 +86,17 @@
 - Build a first-class unmatched-name and identity-conflict review UI, including closed/renamed institutions and campuses
 - Display linked audit history per school with time-series provenance; audit links exist in SQLite but history UI is pending
 - Compare API search answers with actual consumer interfaces and assess confidence; do not claim equivalence
+
+## Delivered in v0.7
+
+- Opt-in OpenAI web-search discovery of website **candidates** for up to five selected registry schools per run.
+- Local SQLite capture of suggested homepage, evidence pointers, provider/model, and timestamp; conservative URL validation.
+- Candidate display and review handoff; never automatically overwrite user-reviewed authoritative fields.
+- Explicit paid-API warning, no arbitrary candidate fetching, and strict input validation.
+
+## Next data-quality work
+
+- Independent domain ownership and website-to-institution verification, with safe DNS/redirect defenses before live site fetching.
+- Authoritative association directory and trusted link reconciliation to supplement model-generated candidate addresses.
+- Provider usage budget/cost estimates and queue-based batch processing with operator cancellation.
+- Explicit human adjudication and school-profile evidence review.
