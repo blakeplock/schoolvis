@@ -156,3 +156,7 @@ The overview uses an approximately 42/58 responsive split: audit controls and re
 ## v0.8.7: Neutral console interface
 
 This release replaces Crimson Text and Work Sans webfonts with a locally available system sans stack (Inter if installed, system UI otherwise) and a graphite, low-chroma dashboard inspired by professional developer consoles. Headings and metrics use moderate weights; small labels and cards are brighter for readability. No third-party font requests are made and the server CSP stays strict. The school registry, five-question API audit, original records, and dashboard behavior are unchanged. The missing `data/aims-seed.mjs` server asset route remains corrected.
+
+## v0.8.8: Workbench layout
+
+The UI separates navigation and search/audit configuration from results and evidence. Blue is the single visual accent for active navigation, selections, and selected-school chart data. Public-facing chrome omits repository and license marketing, while the Apache-2.0 LICENSE, NOTICE, and contributor requirements remain intact. No application data or collection semantics changed.
