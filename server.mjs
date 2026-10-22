@@ -7,8 +7,7 @@ import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { validateAuditRequest } from './lib/live-audit.mjs';
 import { runAudit } from './lib/runner.mjs';
-import {initializeWebsiteDiscovery,getCandidate,saveCandidate,discoverSchoolWebsite} from './lib/website-discovery.mjs';
-import { openRegistry, listSchools, matchCandidate } from './lib/registry.mjs';
+import { openRegistry, listSchools, matchCandidate, sourceWebsite } from './lib/registry.mjs';
 import {reconcileDirectory,schoolQuality,createAuditLinks,listAuditLinks,registryQualitySummary,saveSchoolReview,getSchoolReview} from './lib/registry-quality.mjs';
 const root = dirname(fileURLToPath(import.meta.url));
 const archive = join(homedir(), '.schoolvis', 'audits');
@@ -40,7 +39,6 @@ async function bodyJson(req) {
  return JSON.parse(value);
 }
 const registry = openRegistry();
-initializeWebsiteDiscovery(registry);
 const reconciliation=reconcileDirectory(registry);
 let busy=false;
 const server=createServer(async(req,res)=>{
@@ -50,27 +48,8 @@ const server=createServer(async(req,res)=>{
  if (!allowedHost.has(req.headers.host)) { json(res,403,{error:'Local host only'});return; }
  if (path.startsWith('/api/')) {
   if (req.method==='GET' && path==='/api/schools') {
-    try { const u=new URL(req.url,`http://127.0.0.1:${port}`);const schools=listSchools(registry,{query:u.searchParams.get('q')||'',county:u.searchParams.get('county')||'',highSchool:u.searchParams.get('highSchool')==='true'});json(res,200,{schools:schools.map(s=>({...s,quality:schoolQuality(registry,s.id),review:getSchoolReview(registry,s.id),candidate:getCandidate(registry,s.id)})),total:schools.length,source:'Wikipedia seed; AIMS public directory snapshot overlay',reconciliation:{...reconciliation,unmatchedCount:reconciliation.unmatched.length},quality:registryQualitySummary(registry)});}
+    try { const u=new URL(req.url,`http://127.0.0.1:${port}`);const schools=listSchools(registry,{query:u.searchParams.get('q')||'',county:u.searchParams.get('county')||'',highSchool:u.searchParams.get('highSchool')==='true'});json(res,200,{schools:schools.map(s=>({...s,quality:schoolQuality(registry,s.id),review:getSchoolReview(registry,s.id),publishedWebsite:sourceWebsite(registry,s.id)})),total:schools.length,source:'Wikipedia seed; AIMS public directory snapshot overlay',reconciliation:{...reconciliation,unmatchedCount:reconciliation.unmatched.length},quality:registryQualitySummary(registry)});}
     catch(e){json(res,400,{error:e.message});}return;
-  }
-  if (req.method==='POST' && path==='/api/schools/discover-websites') {
-    const origin=req.headers.origin;
-    if(origin && ![`http://127.0.0.1:${port}`,`http://localhost:${port}`].includes(origin)){json(res,403,{error:'Invalid origin'});return;}
-    if(req.headers['content-type']?.split(';')[0]!=='application/json'){json(res,415,{error:'JSON required'});return;}
-    if(busy){json(res,409,{error:'Another provider operation is running'});return;}
-    let input;try{input=await bodyJson(req);if(!input||!Array.isArray(input.schoolIds)||input.schoolIds.length<1||input.schoolIds.length>5||new Set(input.schoolIds).size!==input.schoolIds.length||!input.schoolIds.every(x=>typeof x==='string'&&/^[a-z0-9-]{1,110}$/.test(x)))throw new Error('Choose 1–5 distinct registry school IDs');}catch(e){json(res,400,{error:e.message});return;}
-    const key=await loadKey();if(!key){json(res,400,{error:'API key not configured'});return;}
-    const lookup=registry.prepare('SELECT id,name,county FROM schools WHERE id=?');
-    const schools=input.schoolIds.map(x=>lookup.get(x));if(schools.some(x=>!x)){json(res,400,{error:'Unknown school'});return;}
-    busy=true;const results=[];
-    try{
-      for(const school of schools){
-        if(getSchoolReview(registry,school.id)){results.push({schoolId:school.id,name:school.name,status:'skipped-reviewed'});continue;}
-        try{const result=await discoverSchoolWebsite(school,key);saveCandidate(registry,school.id,result,'gpt-4.1-mini');results.push({schoolId:school.id,name:school.name,status:result?'candidate-unverified':'not-found',website:result?.website||null});}
-        catch(e){results.push({schoolId:school.id,name:school.name,status:'search-error',error:String(e.message).slice(0,100)});}
-      }
-      json(res,200,{results,warning:'Candidates are unverified. This paid search does not establish official ownership.'});
-    }finally{busy=false;}return;
   }
   if (req.method==='POST' && path==='/api/schools/review') {
     const origin=req.headers.origin;

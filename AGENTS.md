@@ -90,3 +90,7 @@ Always run checks after code changes. Explain any unrun test or audit and its er
 - Do not fuzzy-merge institutions or campuses. Crosswalk only reviewed aliases and preserve unmatched candidates.
 - School source assertions are dated observations, not live crawl state. Audits retain original evidence; SQLite link tables must not modify raw archives.
 - User-entered official websites and grades are attestations, never automatically verified facts; cite supporting HTTPS source pages when supplied.
+
+## v0.8 directory-sourced school websites (2026-10-22)
+
+School website lookup no longer uses OpenAI. The code and API route for paid AI website discovery have been removed. A curated, source-backed initial set of 34 public website links is stored in `data/public-websites.mjs`, keyed against stable school IDs in local SQLite `website_sources`. Every record has a public source URL, capture date, and explicit directory-published-unverified status. A URL listed in a directory is not a verified or currently operational official website. Records without a supported source remain unresolved. Human-reviewed sites take precedence; previously archived user reviews and AI website candidates are preserved in local SQLite for data integrity, but the AI candidates are no longer surfaced or used. OpenAI remains solely for opt-in AI visibility audits. Do not misrepresent 34 website records as 118 verified websites.
