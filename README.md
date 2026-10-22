@@ -148,3 +148,7 @@ The Discovered competitive landscape panel now combines Region and County into a
 ## Dark editorial theme
 
 The interface uses **Crimson Text** for headings and key figures and **Work Sans** for body text, controls, and data. It uses a dark palette and accessible focus outlines. Fonts load from Google Fonts (`fonts.googleapis.com` and `fonts.gstatic.com`); if offline, Georgia and system sans-serif fallbacks are used. Font assets are delivered under the [SIL Open Font License](https://openfontlicense.org/), distinct from the Apache-2.0 application code. Loading Google Fonts makes a third-party network request; for a future fully offline build, self-host reviewed OFL font files and document their license. No npm dependencies are added.
+
+## v0.8.6 dashboard layout
+
+The overview uses an approximately 42/58 responsive split: audit controls and report filters on the left; live/demo visibility KPIs, comparison bars and topic-level appearance bars on the right. Charts derive exclusively from the active dataset; no synthetic trends or fabricated multi-topic results are introduced for five-question audits. At narrow widths the columns stack.
