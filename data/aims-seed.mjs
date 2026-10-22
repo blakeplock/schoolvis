@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: Apache-2.0
+// Names and displayed grade ranges transcribed as factual directory candidates; NOT verified current members.
+export const SEED_SOURCE = 'https://en.wikipedia.org/wiki/Association_of_Independent_Maryland_and_DC_Schools';
+const groups = [
+['Anne Arundel County',`Archbishop Spalding High School|9-12;Chesapeake Montessori School|PK-8;Indian Creek School|PK-12;The Key School|PK-12;Naval Academy Primary School|PK-5;Saint Andrew's United Methodist Day School|PK-8;St. Anne's School of Annapolis|PK-8;St. Martin's-in-the-Field Episcopal School|PK-8;Severn School|PK-12;The Summit School|1-8`],
+['Baltimore City',`Baltimore Lab School|1-12;Boys' Latin School of Maryland|K-12;Bryn Mawr School|PK-12;Calvert School|PK-8;Catholic High School of Baltimore|9-12;The Community School|9-12;Cristo Rey Jesuit High School|9-12;Friends School of Baltimore|PK-12;Gilman School|PK-12;The GreenMount School|K-8;Mercy High School|unknown;Mother Seton Academy|6-8;Mount Saint Joseph High School|9-12;Roland Park Country School|PK-12;St. Ignatius Loyola Academy|5-8;Sisters Academy of Baltimore|5-8;Waldorf School of Baltimore|PK-8`],
+['Baltimore County',`Beth Tfiloh Dahan Community School|PK-12;Calvert Hall College High School|9-12;Cambridge School|K-8;Concordia Preparatory School|6-12;Garrison Forest School|PK-12;Greenspring Montessori School|PK-9;Jemicy School|1-12;Krieger Schechter Day School|K-8;Loyola Blakefield|6-12;Maryvale Preparatory School|6-12;McDonogh School|PK-12;Notre Dame Preparatory School|6-12;The Odyssey School|K-8;Ohr Chadash Academy|PK-8;Oldfields School|8-12;Park School of Baltimore|PK-12;St. James Academy|PK-8;St. Paul's Schools|K-12;St. Timothy's School|9-12`],
+['Calvert County',`Calverton School|PK-12`],
+['Carroll County',`Gerstell Academy|PK-12;Montessori School of Westminster|PK-9`],
+['Frederick County',`Friends Meeting School|K-12`],
+['Harford County',`Harford Day School|PK-8;The Highlands School|K-12;The John Carroll School|9-12`],
+['Howard County',`Glenelg Country School|PK-12;St. John's Parish Day School|PK-5;Trinity School|PK-8`],
+['Kent County',`Kent School|PK-8;Radcliffe Creek School|PK-8`],
+['Montgomery County',`Academy of the Holy Cross|9-12;Alef Bet Montessori School|PK/K;Barnesville School of Arts & Sciences|PK-8;Barrie School|PK-12;Bullis School|K-12;Charles E. Smith Jewish Day School|PK-12;Christ Episcopal School|PK-8;Concord Hill School|PK-3;Connelly School of the Holy Child|6-12;Diener School|K-8;Evergreen School|PK-3;Georgetown Preparatory School|9-12;Grace Episcopal Day School|PK-5;Green Acres School|PK-8;The Harbor School|PK-2;Holton-Arms School|3-12;Landon School|3-12;Mater Dei School|1-8;McLean School of Maryland|K-12;Norwood School|PK-8;Our Lady of Good Counsel High School|9-12;The Primary Day School|PK-2;Rochambeau French International School|PK-12;St. Andrew's Episcopal School|PK-12;St. John's Episcopal School|PK-8;Sandy Spring Friends School|PK-12;Seneca Academy and Circle School|PK-5;Sidwell Friends School (Lower School)|PK-5;Stone Ridge School of the Sacred Heart|PK-12;Washington Episcopal School|PK-8;Washington Waldorf School|PK-12;The Woods Academy|PK-8`],
+["Prince George's County",`Friends Community School|K-8;Holy Trinity School|PK-8;St. Vincent Pallotti High School|9-12`],
+["Queen Anne's County",`The Gunston School|9-12;Wye River Upper School|9-12`],
+['Talbot County',`The Country School|PK-8`],
+['Worcester County',`Worcester Preparatory School|PK-12`],
+['Washington DC',`Aidan Montessori School|PK-6;Beauvoir School|PK-3;Capitol Hill Day School|PK-8;Edmund Burke School|6-12;Georgetown Day School|PK-12;Gonzaga College High School|9-12;Lab School of Washington|1-12;Lowell School|PK-8;Maret School|K-12;Milton Gottesman Jewish Day School of the Nation's Capital|PK-8;MYSA School|K-12;National Cathedral School|4-12;National Presbyterian School|PK-6;Parkmont School|6-12;The River School|PK-3;St. Albans School|4-12;St. Anselm's Abbey School|6-12;St. Patrick's Episcopal Day School|PK-8;Sheridan School|K-8;Sidwell Friends School (Middle/Upper School)|6-12;Washington Jesuit Academy|4-8`]
+];
+export const SEED = groups.flatMap(([county,items])=>items.split(';').map(item=>{const [name,grades]=item.split('|');return {name,county,grades};}));

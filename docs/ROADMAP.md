@@ -55,3 +55,18 @@
 - Verify official school sources before presenting any claim as substantiated
 - Model alternative school names and preserve entire provider responses for evidence review
 - Add prompt-scope categories (independent-only vs open search) and cross-response contradiction detection
+
+## Delivered in v0.5 (local registry foundation)
+
+- Local SQLite file with 118 preliminary Maryland/DC school candidates sourced from the public association-related list
+- Persistent deterministic IDs, stored provenance and explicit unverified status
+- County/search and grades 9–12 filtering in the dashboard; add-to-audit workflow requiring official website verification
+- Conservative reviewed naming aliases and lookup API for audit-discovered candidates
+- No automated assertion of current AIMS membership, official websites, demographics or school programs
+
+## v0.6 data quality work
+
+- Verify the current AIMS directory against association data; reconcile missing/stale listings
+- Verify campus identities, official URLs, high-school grade ranges, and entity aliases with per-field source dates
+- Add explicit human review and revision-history workflow and attach archived audit observations to stable registry IDs
+- Improve candidate extraction and offer ranked match suggestions without silently coalescing entities
