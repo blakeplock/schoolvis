@@ -159,6 +159,25 @@ function renderDiscovery() {
   replace('claim-list',[evidence]);
 }
 
+function renderTopicChart(report) {
+  const root = el('topic-chart');
+  const measured = report.topics.filter(topic => topic.denominator > 0);
+  if (!measured.length) {
+    root.replaceChildren(text('p', 'No topic observations available for this selection.', 'empty'));
+    return;
+  }
+  root.replaceChildren(...measured.map(topic => {
+    const item = text('div', '', 'topic-chart-item');
+    const head = text('div', '', 'topic-chart-head');
+    head.append(text('span', topic.topic), text('strong', `${topic.hits} / ${topic.denominator} · ${percent(topic.rate)}`));
+    const track = text('div', '', 'topic-chart-track');
+    const fill = text('div', '', 'topic-chart-fill');
+    fill.style.width = percent(topic.rate);
+    track.append(fill);
+    item.append(head, track);
+    return item;
+  }));
+}
 function render() {
   const report = summarize(state.data, state.schoolId, state.platform);
   const peers = report.schools.filter(s => s.id !== state.schoolId).sort((a,b) => b.rate-a.rate);
@@ -178,7 +197,7 @@ function render() {
     banner.className = 'notice observed';
     banner.textContent = state.discovery ? 'OBSERVED OPENAI API WEB SEARCH. Locally archived; school extraction and claims are unverified. This is not consumer ChatGPT.' : 'IMPORTED OBSERVATIONS (SELF-REPORTED). This file was supplied locally, not independently verified. Collection methods may differ across platforms.';
   }
-  renderBars(report); renderGaps(report); renderObservations(report); renderDiscovery();
+  renderBars(report); renderTopicChart(report); renderGaps(report); renderObservations(report); renderDiscovery();
 }
 function csvField(v) {
   const s = String(v ?? '');
