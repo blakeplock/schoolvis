@@ -129,8 +129,32 @@ async function importFile(file) {
     setupOptions(); render();
   } catch (error) { alert(`Could not import: ${error.message}`); }
 }
+async function auditStatus() {
+  try { const r=await fetch('/api/status');const j=await r.json();el('api-status').textContent=j.keyConfigured?'API key configured':'API key not configured'; }
+  catch {el('api-status').textContent='Live audit requires the local server';}
+}
+function useAudit(dataset) {
+  validateDataset(dataset);state.data=dataset;state.schoolId=dataset.schools[0].id;state.platform='ChatGPT';state.topic='All topics';state.visible=8;setupOptions();render();
+}
+async function runLiveAudit() {
+  const lines=el('audit-schools').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const schools=lines.map(line=>{const parts=line.split('|');if(parts.length!==2)throw new Error('Use School name | https://website on each line');return {name:parts[0].trim(),website:parts[1].trim()};});
+  const btn=el('run-audit');btn.disabled=true;el('audit-message').textContent='Running five provider requests sequentially. Please wait…';
+  try {
+    const r=await fetch('/api/audits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:el('audit-location').value,schools})});
+    const j=await r.json();if(!r.ok)throw new Error(j.error||'Request failed');
+    useAudit(j.dataset);el('audit-message').textContent=`Audit saved locally: ${j.id}. Five responses captured with API provenance.`;
+  }catch(e){el('audit-message').textContent='Audit failed: '+e.message;}finally{btn.disabled=false;}
+}
+async function loadLastAudit(){
+  try{const list=await(await fetch('/api/audits')).json();if(!list.audits?.length)throw new Error('No saved audits yet');
+  const result=await(await fetch('/api/audits/'+encodeURIComponent(list.audits[0]))).json();useAudit(result.dataset);
+  el('audit-message').textContent=`Loaded local archive: ${list.audits[0]}`;}catch(e){el('audit-message').textContent=e.message;}
+}
 function init() {
-  validateDataset(state.data); setupOptions(); render();
+  validateDataset(state.data); setupOptions(); render(); void auditStatus();
+  el('run-audit').addEventListener('click',()=>{void runLiveAudit().catch(e=>{el('audit-message').textContent=e.message;});});
+  el('load-audit').addEventListener('click',()=>{void loadLastAudit();});
   el('school-select').addEventListener('change', e => { state.schoolId = e.target.value; render(); });
   el('platform-select').addEventListener('change', e => { state.platform = e.target.value; render(); });
   el('topic-select').addEventListener('change', e => { state.topic = e.target.value; state.visible = 8; render(); });

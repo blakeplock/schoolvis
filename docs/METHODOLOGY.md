@@ -41,3 +41,11 @@ Allowed platform identifiers: `ChatGPT`, `Gemini`, `Perplexity`. Allowed methods
 A production benchmark needs: documented geographic context, a versioned prompt suite, collection dates, model/product versions, direct capture of full outputs/citations, consistent extraction rules, repeated runs, confidence intervals or stability bands, comparison of API-versus-consumer experiences, provider-terms compliance, and procedures for handling schools with ambiguous names.
 
 Claims in the UI and reports must use precise language such as **"mentioned in 18 of 50 sampled ChatGPT answers"**, never **"ChatGPT recommends this school 36% of the time"** unless representative consumer usage has been established independently.
+
+## v0.3 local API pilot
+
+Five **college preparation** questions (q01–q05), one request each, run against the OpenAI Responses API with `web_search_preview` and a short geographic context. The model is `gpt-4.1-mini` unless changed in server code after checking provider compatibility. These answers are **API web-search outputs** and must never be represented as consumer ChatGPT search results. Cost is incurred per request and for web search; the API billing dashboard is authoritative. Each request uses `store: false`; the local application stores audit responses on disk.
+
+School detection is deliberately conservative: exact full school names only, case-insensitive and with word boundaries. Abbreviations, alternate names, or descriptions without names may be missed. The school websites identify entities but are NOT fetched or verified by SchoolVis. Citations are captured only from URL citation annotations present in the API output. A lack of citation is not evidence that the answer had no sources. The current schema records the first 1,500 response characters as a display excerpt; local archive metadata includes the extracted longer answer and provider model information.
+
+The five questions are not a representative estimate of visibility across all parent intents. No repeated sampling, automated school disambiguation, or verification of claims is included. If one of five calls fails, the run is not archived and its earlier API requests may still incur charges.
