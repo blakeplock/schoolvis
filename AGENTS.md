@@ -54,6 +54,13 @@ Always run checks after code changes. Explain any unrun test or audit and its er
 - No external provider calls or data collection may be enabled without explicit opt-in, cost controls, provider-terms review, and transparent provenance labels.
 - In PR descriptions include: user-visible behavior, data/provenance impact, security/privacy impact, dependency/license changes, commands run with results, and known limitations.
 
+## v0.2 Worksheet Workflow
+
+- Generate the collection worksheet using `lib/worksheet.mjs`. Convert completed rows with `npm run import:worksheet -- <filled.csv> <schools.json> <output.json>`.
+- The provided school identities in `schools.json` must be independently curated, and real observed data must never be analyzed against fictional default school identities.
+- Preserve strict limits and CSV injection protections; CSV inputs are untrusted. Output must never silently overwrite previous recordings.
+- Do not claim manual recordings represent typical consumer AI responses without repeated and documented collection.
+
 ## Current Scope and Known Gaps
 
 - v0.1 only visualizes fictional demonstration data or **user-supplied, self-reported** JSON observations. It does not contact OpenAI, Google, Perplexity, or any other AI provider.

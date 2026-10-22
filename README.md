@@ -39,6 +39,29 @@ Alternatively, this is a purely static client-side app: upload the root director
 
 This is **a demo of the desired report**, not a measurement of a real school. A zero in five sampled answers has substantial uncertainty and is not a platform-wide claim.
 
+## v0.2: Run a manual evidence-backed audit
+
+1. Open the dashboard and click **Audit worksheet** to download a CSV containing 50 parent-intent prompts on each of three platforms (150 rows). These are **collection instructions**, not results.
+2. Copy the JSON below to `schools.json` and replace the placeholder schools with actual school names, safe IDs, and publicly documented strengths. Do not include personal data. Add only strengths supported by public HTTPS links. Use 2–15 schools.
+
+```json
+[
+  {"id":"school-a","name":"School A","strengths":[{"topic":"Robotics & engineering","description":"Publicly documented robotics program","sourceUrl":"https://example.org/robotics"}]},
+  {"id":"school-b","name":"School B","strengths":[]}
+]
+```
+
+3. In the worksheet, fill `captured_at_iso`, `school_ids_semicolon`, `response_excerpt`, and `source_urls_semicolon` based on actual, manually recorded responses. Use the school IDs from `schools.json` separated by semicolons, and preserve an accurate response excerpt. A blank `school_ids_semicolon` is allowed if no tracked school appeared. Do not paste confidential or personal information.
+4. Save as CSV and convert locally:
+
+```sh
+npm run import:worksheet -- completed.csv schools.json recorded-observations.json
+```
+
+5. In the dashboard, select **Import observations** and choose `recorded-observations.json`. Measurements are marked **SELF-REPORTED**, not independently verified. The importer refuses to overwrite an existing output file.
+
+Notes: the v0.2 converter preserves the v1.0 data schema, which supports **one recorded response per question and platform**; repeats and robust uncertainty estimates are future work. Only completed rows are imported. When editing the spreadsheet, preserve header names, parent questions, and platform labels exactly. Some spreadsheet tools may modify ISO timestamps or leading-zero identifiers; double-check the saved CSV. For a valid comparison, use the same questions, time window, settings and location across platforms, and document any API-versus-consumer differences. See [methodology](docs/METHODOLOGY.md).
+
 ## Import your own results
 
 Use **Import observations** to load a JSON file conforming to [the measurement schema and methodology](docs/METHODOLOGY.md). The file stays in your browser session; it is not uploaded to a server. Input is limited to 1 MB, 2–15 schools, 1–100 questions, and 1–3,000 response observations. A `kind: "observed"` label signifies only that **the person who supplied the file claims the observations are real**. It is not independent verification.

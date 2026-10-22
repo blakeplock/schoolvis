@@ -8,6 +8,12 @@
 - CSV export, mobile dashboard, zero-dependency static site and localhost server
 - Apache-2.0, AGENTS.md, dependency policy, security guidance, tests and basic CI
 
+## Delivered in v0.2
+
+- Downloadable 150-row parent-question collection worksheet
+- Strict local CSV-to-JSON converter for manually captured observations and public school profiles
+- Four worksheet and validation regression tests; no third-party dependencies
+
 ## Before live customer pilots
 
 - Define fixed prompt versioning and school entity identity/disambiguation policy

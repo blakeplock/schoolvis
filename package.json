@@ -1,16 +1,19 @@
 {
   "name": "school-ai-discovery",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Privacy-first prototype for independent-school visibility in AI recommendations",
   "type": "module",
   "license": "Apache-2.0",
   "private": true,
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node server.mjs",
     "test": "node --test",
-    "lint": "node --check app.js && node --check server.mjs && node --check lib/analysis.mjs && node --check data/demo.mjs && node --check data/questions.mjs && node --check scripts/check-licenses.mjs",
+    "lint": "node --check app.js && node --check lib/worksheet.mjs && node --check server.mjs && node --check lib/analysis.mjs && node --check data/demo.mjs && node --check data/questions.mjs && node --check scripts/check-licenses.mjs && node --check scripts/import-worksheet.mjs",
     "check:licenses": "node scripts/check-licenses.mjs",
-    "check": "npm run lint && npm test && npm run check:licenses && npm audit --audit-level=high"
+    "check": "npm run lint && npm test && npm run check:licenses && npm audit --audit-level=high",
+    "import:worksheet": "node scripts/import-worksheet.mjs"
   }
 }
