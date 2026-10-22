@@ -4,7 +4,7 @@ import { validateDataset, summarize } from './lib/analysis.mjs';
 import { createWorksheet } from './lib/worksheet.mjs';
 
 const el = id => document.getElementById(id);
-const state = { data: DEMO, schoolId: 'harbor', platform: 'ChatGPT', topic: 'All topics', visible: 8, filename: 'synthetic-demo' };
+const state = { data: DEMO, schoolId: 'harbor', platform: 'ChatGPT', topic: 'All topics', visible: 8, filename: 'synthetic-demo', discovery: null };
 const percent = ratio => `${Math.round(ratio * 100)}%`;
 function text(tag, value, className) {
   const node = document.createElement(tag);
@@ -66,7 +66,7 @@ function renderObservations(report) {
     badges.append(text('span', o.platform, 'pill'), text('span', hit ? 'Appeared' : 'Not mentioned', hit ? 'pill hit' : 'pill miss'));
     summary.append(title, badges); card.append(summary);
     const body = text('div', '', 'observation-details');
-    body.append(text('strong', 'Recorded response excerpt'), text('p', o.responseExcerpt));
+    body.append(text('strong', 'Recorded response excerpt'), text('p', o.responseExcerpt.replace(/\*\*/g,'').replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g,'$1')));
     const named = o.schoolIds.map(id => state.data.schools.find(s => s.id === id)?.name).filter(Boolean);
     body.append(text('p', 'Tracked schools: ' + (named.length ? named.join(', ') : 'none')));
     body.append(text('p', `Topic: ${q.topic} · Method: ${o.method} · Captured: ${o.capturedAt}`));
@@ -78,6 +78,18 @@ function renderObservations(report) {
   }));
   el('records-shown').textContent = `Showing ${subset.length} of ${rows.length} responses`;
   el('show-more').hidden = subset.length >= rows.length;
+}
+function renderDiscovery() {
+  const analysis = state.discovery;
+  if (!analysis) {
+    replace('discovery-list',[text('p','No discovery analysis for this dataset. Run or load a v0.4 audit.','empty')]);
+    replace('claim-list',[]);return;
+  }
+  const entries = analysis.schools || [];
+  replace('discovery-list', entries.length ? entries.map(s=>text('p',`${s.name} · ${s.responses} / ${analysis.captures.length} responses · ${s.tracked?'Tracked':'Untracked'} · candidate, not independently verified`)) : [text('p','No school candidates could be extracted. Manual review required.','empty')]);
+  const claims=analysis.captures.flatMap(c=>(c.claims||[]).map(x=>({questionId:c.questionId,...x})));
+  const quality=analysis.captures.reduce((a,c)=>{a.maps+=c.citationSummary?.mapSearchLinks||0;a.total+=c.citationSummary?.total||0;return a;},{maps:0,total:0});
+  replace('claim-list',[text('strong',`Evidence review: ${quality.maps} of ${quality.total} cited links are Google Maps searches (not verification). ${claims.length} numerical claim flags.`),...claims.slice(0,10).map(c=>text('p',`${c.questionId}: ${c.excerpt} — unverified`))]);
 }
 function render() {
   const report = summarize(state.data, state.schoolId, state.platform);
@@ -96,9 +108,9 @@ function render() {
     banner.textContent = 'FICTIONAL DEMO DATA. All scores, school names, claims, and responses are invented. No AI providers were queried.';
   } else {
     banner.className = 'notice observed';
-    banner.textContent = 'IMPORTED OBSERVATIONS (SELF-REPORTED). This file was supplied locally, not independently verified. Collection methods may differ across platforms.';
+    banner.textContent = state.discovery ? 'OBSERVED OPENAI API WEB SEARCH. Locally archived; school extraction and claims are unverified. This is not consumer ChatGPT.' : 'IMPORTED OBSERVATIONS (SELF-REPORTED). This file was supplied locally, not independently verified. Collection methods may differ across platforms.';
   }
-  renderBars(report); renderGaps(report); renderObservations(report);
+  renderBars(report); renderGaps(report); renderObservations(report); renderDiscovery();
 }
 function csvField(v) {
   const s = String(v ?? '');
@@ -124,7 +136,7 @@ async function importFile(file) {
   if (file.size > 1024 * 1024) { alert('JSON file exceeds the 1 MB safety limit.'); return; }
   try {
     const parsed = JSON.parse(await file.text()); validateDataset(parsed);
-    state.data = parsed; state.schoolId = parsed.schools[0].id; state.platform = 'All platforms';
+    state.discovery = null; state.data = parsed; state.schoolId = parsed.schools[0].id; state.platform = 'All platforms';
     state.topic = 'All topics'; state.visible = 8; state.filename = file.name;
     setupOptions(); render();
   } catch (error) { alert(`Could not import: ${error.message}`); }
@@ -133,7 +145,8 @@ async function auditStatus() {
   try { const r=await fetch('/api/status');const j=await r.json();el('api-status').textContent=j.keyConfigured?'API key configured':'API key not configured'; }
   catch {el('api-status').textContent='Live audit requires the local server';}
 }
-function useAudit(dataset) {
+function useAudit(dataset, discovery = null) {
+  state.discovery = discovery;
   validateDataset(dataset);state.data=dataset;state.schoolId=dataset.schools[0].id;state.platform='ChatGPT';state.topic='All topics';state.visible=8;setupOptions();render();
 }
 async function runLiveAudit() {
@@ -143,12 +156,12 @@ async function runLiveAudit() {
   try {
     const r=await fetch('/api/audits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:el('audit-location').value,schools})});
     const j=await r.json();if(!r.ok)throw new Error(j.error||'Request failed');
-    useAudit(j.dataset);el('audit-message').textContent=`Audit saved locally: ${j.id}. Five responses captured with API provenance.`;
+    useAudit(j.dataset,j.discovery);el('audit-message').textContent=`Audit saved locally: ${j.id}. Five responses captured with API provenance.`;
   }catch(e){el('audit-message').textContent='Audit failed: '+e.message;}finally{btn.disabled=false;}
 }
 async function loadLastAudit(){
   try{const list=await(await fetch('/api/audits')).json();if(!list.audits?.length)throw new Error('No saved audits yet');
-  const result=await(await fetch('/api/audits/'+encodeURIComponent(list.audits[0]))).json();useAudit(result.dataset);
+  const result=await(await fetch('/api/audits/'+encodeURIComponent(list.audits[0]))).json();useAudit(result.dataset,result.discovery);
   el('audit-message').textContent=`Loaded local archive: ${list.audits[0]}`;}catch(e){el('audit-message').textContent=e.message;}
 }
 function init() {

@@ -65,7 +65,7 @@ const server=createServer(async(req,res)=>{
       const id=new Date().toISOString().replace(/[:.]/g,'-')+'-'+randomUUID();
       await mkdir(archive,{recursive:true,mode:0o700});
       await writeFile(join(archive,id+'.json'),JSON.stringify(result,null,2),{mode:0o600,flag:'wx'});
-      json(res,200,{id,dataset:result.dataset,metadata:{...result.metadata,captures:undefined}});
+      json(res,200,{id,dataset:result.dataset,discovery:result.discovery,metadata:{...result.metadata,captures:undefined}});
     }catch(e){json(res,502,{error:String(e.message).slice(0,220)+' — Any incomplete run was discarded; check API usage dashboard for incurred costs.'});}
     finally{busy=false;}return;
   }

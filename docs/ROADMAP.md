@@ -41,3 +41,17 @@
 - Credential stored in ignored `.env` file on the Mac; archive under `~/.schoolvis/audits` with owner-only file permissions
 - Reload most recent recorded audit into the existing dashboard; mocked tests and zero third-party packages
 - Known gaps: no repeats, browser-consumer equivalence, verified school identity, full-run cost estimate or per-answer confidence
+
+## Delivered in v0.4
+
+- Extract candidate schools from linked answer lists, including competitors not configured in the audit (heuristic; manual review required)
+- Differentiate candidate recommendations from generic mentions without claiming verification
+- Flag numeric claims and Google Maps search links as unsupported evidence, and distinguish API results from ChatGPT
+- Display local discovery analyses with archived audits and improve readable response excerpts
+
+## Next measurement-quality work
+
+- Human annotation and labeled accuracy evaluation for entity matching and recommendation classification
+- Verify official school sources before presenting any claim as substantiated
+- Model alternative school names and preserve entire provider responses for evidence review
+- Add prompt-scope categories (independent-only vs open search) and cross-response contradiction detection
