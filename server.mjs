@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { validateAuditRequest } from './lib/live-audit.mjs';
 import { runAudit } from './lib/runner.mjs';
 import { openRegistry, listSchools, matchCandidate } from './lib/registry.mjs';
+import {reconcileDirectory,schoolQuality,createAuditLinks,listAuditLinks,registryQualitySummary,saveSchoolReview,getSchoolReview} from './lib/registry-quality.mjs';
 const root = dirname(fileURLToPath(import.meta.url));
 const archive = join(homedir(), '.schoolvis', 'audits');
 const assets = new Map([
@@ -38,6 +39,7 @@ async function bodyJson(req) {
  return JSON.parse(value);
 }
 const registry = openRegistry();
+const reconciliation=reconcileDirectory(registry);
 let busy=false;
 const server=createServer(async(req,res)=>{
  const path=req.url?.split('?')[0]||'';
@@ -46,8 +48,14 @@ const server=createServer(async(req,res)=>{
  if (!allowedHost.has(req.headers.host)) { json(res,403,{error:'Local host only'});return; }
  if (path.startsWith('/api/')) {
   if (req.method==='GET' && path==='/api/schools') {
-    try { const u=new URL(req.url,`http://127.0.0.1:${port}`);const schools=listSchools(registry,{query:u.searchParams.get('q')||'',county:u.searchParams.get('county')||'',highSchool:u.searchParams.get('highSchool')==='true'});json(res,200,{schools,total:schools.length,source:'Wikipedia association list (not verified current membership)'});}
+    try { const u=new URL(req.url,`http://127.0.0.1:${port}`);const schools=listSchools(registry,{query:u.searchParams.get('q')||'',county:u.searchParams.get('county')||'',highSchool:u.searchParams.get('highSchool')==='true'});json(res,200,{schools:schools.map(s=>({...s,quality:schoolQuality(registry,s.id),review:getSchoolReview(registry,s.id)})),total:schools.length,source:'Wikipedia seed; AIMS public directory snapshot overlay',reconciliation:{...reconciliation,unmatchedCount:reconciliation.unmatched.length},quality:registryQualitySummary(registry)});}
     catch(e){json(res,400,{error:e.message});}return;
+  }
+  if (req.method==='POST' && path==='/api/schools/review') {
+    const origin=req.headers.origin;
+    if (origin && ![`http://127.0.0.1:${port}`,`http://localhost:${port}`].includes(origin)){json(res,403,{error:'Invalid origin'});return;}
+    if(req.headers['content-type']?.split(';')[0]!=='application/json'){json(res,415,{error:'JSON required'});return;}
+    try {const review=saveSchoolReview(registry,await bodyJson(req));json(res,200,{review});}catch(e){json(res,400,{error:e.message});}return;
   }
   if (req.method==='POST' && path==='/api/schools/match') {
     const origin=req.headers.origin; if(origin && ![`http://127.0.0.1:${port}`,`http://localhost:${port}`].includes(origin)){json(res,403,{error:'Invalid origin'});return;}
@@ -55,13 +63,15 @@ const server=createServer(async(req,res)=>{
     try {const v=await bodyJson(req);if(!Array.isArray(v.names)||v.names.length>100||!v.names.every(n=>typeof n==='string'&&n.length<151))throw new Error('Invalid names');json(res,200,{matches:v.names.map(name=>({candidate:name,school:matchCandidate(registry,name)}))});}
     catch(e){json(res,400,{error:e.message});}return;
   }
+  if (req.method==='GET' && path==='/api/registry/reconciliation') {json(res,200,reconciliation);return;}
+  if (req.method==='GET' && /^\/api\/audits\/[a-f0-9-]+\/links$/.test(path)) {const id=path.split('/')[3];json(res,200,{auditId:id,links:listAuditLinks(registry,id)});return;}
   if (req.method==='GET' && path==='/api/status') {json(res,200,{keyConfigured:!!(await loadKey()),busy});return;}
   if (req.method==='GET' && path==='/api/audits') {
     try { const names=(await readdir(archive)).filter(x=>/^[a-f0-9-]+\.json$/.test(x)).sort().reverse().slice(0,30);json(res,200,{audits:names.map(name=>name.slice(0,-5))});}
     catch(e){json(res,200,{audits:[]});} return;
   }
   if (req.method==='GET' && /^\/api\/audits\/[a-f0-9-]+$/.test(path)) {
-    try {const id=path.split('/').at(-1);json(res,200,JSON.parse(await readFile(join(archive,id+'.json'),'utf8')));}
+    try {const id=path.split('/').at(-1);const saved=JSON.parse(await readFile(join(archive,id+'.json'),'utf8'));createAuditLinks(registry,id,saved);json(res,200,{...saved,registryLinks:listAuditLinks(registry,id)});}
     catch {json(res,404,{error:'Audit not found'});}return;
   }
   if (req.method==='POST' && path==='/api/audits') {
@@ -77,7 +87,8 @@ const server=createServer(async(req,res)=>{
       const id=new Date().toISOString().replace(/[:.]/g,'-')+'-'+randomUUID();
       await mkdir(archive,{recursive:true,mode:0o700});
       await writeFile(join(archive,id+'.json'),JSON.stringify(result,null,2),{mode:0o600,flag:'wx'});
-      json(res,200,{id,dataset:result.dataset,discovery:result.discovery,metadata:{...result.metadata,captures:undefined}});
+      createAuditLinks(registry,id,result);
+      json(res,200,{id,registryLinks:listAuditLinks(registry,id),dataset:result.dataset,discovery:result.discovery,metadata:{...result.metadata,captures:undefined}});
     }catch(e){json(res,502,{error:String(e.message).slice(0,220)+' — Any incomplete run was discarded; check API usage dashboard for incurred costs.'});}
     finally{busy=false;}return;
   }

@@ -171,17 +171,25 @@ async function loadRegistry() {
   const query=el('registry-search').value.trim();const highSchool=el('registry-grades').value==='high';
   const res=await fetch('/api/schools?'+new URLSearchParams({q:query,highSchool:String(highSchool)}));
   if(!res.ok)throw new Error('Registry unavailable');const data=await res.json();registryResults=data.schools;
-  el('registry-count').textContent=`${data.total} listed`;
-  el('registry-status').textContent='Source-listed / not verified current members. Names, grade ranges and websites require independent verification.';
+  el('registry-count').textContent=`${data.total} listed · ${data.quality.withOfficialListing} directory-matched`;
+  el('registry-status').textContent=`AIMS directory snapshot: ${data.reconciliation.matched}/${data.reconciliation.sourceNames} names linked; ${data.reconciliation.unmatchedCount} unmatched (review needed). No school's grade ranges or website has been independently verified.`;
   const rows=data.schools.slice(0,90).map(s=>{
-   const div=text('div','','registry-row');const info=text('div','');info.append(text('strong',s.name),text('small',`${s.county} · ${s.grades} · Unverified`));
+   const div=text('div','','registry-row');const info=text('div','');info.append(text('strong',s.name),text('small',`${s.county} · ${s.grades} · ${s.quality.officialDirectoryListed ? "AIMS directory-listed (snapshot)" : "Legacy seed only"} · ${s.review ? "User-reviewed URL" : "Grade/website unverified"}`));
+   const reviewButton=text('button',s.review?'Edit review':'Review source','button outline');reviewButton.type='button';
+   reviewButton.addEventListener('click',async()=>{
+    const officialWebsite=prompt('Official school website (HTTPS); confirm against school-managed sources:',s.review?.officialWebsite||'');if(officialWebsite===null)return;
+    const gradeStatus=prompt('Upper-school coverage: unknown, serves-9-12, or does-not-serve-9-12',s.review?.gradeStatus||'unknown');if(gradeStatus===null)return;
+    const gradesEvidenceUrl=prompt('HTTPS page supporting grade coverage; leave blank if unknown:',s.review?.gradesEvidenceUrl||'');if(gradesEvidenceUrl===null)return;
+    try{const response=await fetch('/api/schools/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({schoolId:s.id,officialWebsite:officialWebsite.trim(),gradeStatus:gradeStatus.trim(),gradesEvidenceUrl:gradesEvidenceUrl.trim()})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Review failed');await loadRegistry();}
+    catch(e){el('registry-status').textContent='Review not saved: '+e.message;}
+   });
    const b=text('button','Add to audit','button outline');b.type='button';b.addEventListener('click',()=>{
     const existing=el('audit-schools').value.trim();const lines=existing?existing.split('\n'):[];
     if(lines.some(l=>l.split('|')[0].trim().toLowerCase()===s.name.toLowerCase())){el('registry-status').textContent='Already in the audit list.';return;}
     if(lines.length>=5){el('registry-status').textContent='Audit limit: 5 schools. Remove one first.';return;}
-    el('audit-schools').value=(existing?existing+'\n':'')+`${s.name} | https://REPLACE-WITH-OFFICIAL-WEBSITE`;el('registry-status').textContent='Added. Replace placeholder with the school’s verified official HTTPS website before running.';
+    el('audit-schools').value=(existing?existing+'\n':'')+`${s.name} | ${s.review?.officialWebsite||'https://REPLACE-WITH-OFFICIAL-WEBSITE'}`;el('registry-status').textContent='Added. Replace placeholder with the school’s verified official HTTPS website before running.';
     el('audit-schools').focus();
-   });div.append(info,b);return div;
+   });div.append(info,reviewButton,b);return div;
   });
   replace('registry-list',rows.length?rows:[text('p','No matching records.','empty')]);
   if(data.schools.length>90)el('registry-status').textContent+=` Showing the first 90 of ${data.total}; narrow your search to see others.`;

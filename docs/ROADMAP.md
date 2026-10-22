@@ -70,3 +70,19 @@
 - Verify campus identities, official URLs, high-school grade ranges, and entity aliases with per-field source dates
 - Add explicit human review and revision-history workflow and attach archived audit observations to stable registry IDs
 - Improve candidate extraction and offer ranked match suggestions without silently coalescing entities
+
+## Delivered in v0.6 — directory reconciliation and local review
+
+- 58-name dated AIMS public directory snapshot as an *additional provenance source*, not authoritative membership certification
+- Source assertions and explicitly reviewed name crosswalk, plus unresolved-name list
+- Per-school source status and user-submitted HTTPS website/grade review (no automated fetch or verification)
+- Persistent, non-destructive links from archived AI audits to stable school IDs; tracked vs discovered candidate
+- Tests covering snapshot reconciliation, idempotent linkage, provenance, and review validation
+
+## Still required for institutional data quality
+
+- Obtain and maintain a complete current AIMS list through an authorized directory/export arrangement
+- Independently verify official domains and school-offered grades, record page evidence and last-checked timestamps
+- Build a first-class unmatched-name and identity-conflict review UI, including closed/renamed institutions and campuses
+- Display linked audit history per school with time-series provenance; audit links exist in SQLite but history UI is pending
+- Compare API search answers with actual consumer interfaces and assess confidence; do not claim equivalence

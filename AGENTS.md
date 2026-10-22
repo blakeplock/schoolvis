@@ -83,3 +83,10 @@ Always run checks after code changes. Explain any unrun test or audit and its er
 - Website, grades, county, status and aliases require field-level source verification before customer-facing use.
 - Use SQLite only inside the local service; don't expose arbitrary SQL or allow remote file paths or database statements through APIs.
 - Preserve source and verification status for every seeded record; do not turn AI-generated claims into verified institution facts.
+
+## v0.6 directory data integrity
+
+- Never conflate `source-listed-unverified`, AIMS public directory snapshot listings, and `user-reviewed-not-independently-audited` with certified active membership or independently verified websites.
+- Do not fuzzy-merge institutions or campuses. Crosswalk only reviewed aliases and preserve unmatched candidates.
+- School source assertions are dated observations, not live crawl state. Audits retain original evidence; SQLite link tables must not modify raw archives.
+- User-entered official websites and grades are attestations, never automatically verified facts; cite supporting HTTPS source pages when supplied.
