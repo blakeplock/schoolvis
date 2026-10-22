@@ -174,7 +174,7 @@ async function loadRegistry() {
   el('registry-count').textContent=`${data.total} listed · ${data.schools.filter(s=>s.publishedWebsite).length} with published website sources in this view`;
   el('registry-status').textContent=`AIMS directory snapshot: ${data.reconciliation.matched}/${data.reconciliation.sourceNames} names linked; ${data.reconciliation.unmatchedCount} unmatched (review needed). No school's grade ranges or website has been independently verified.`;
   const rows=data.schools.slice(0,90).map(s=>{
-   const div=text('div','','registry-row');const info=text('div','');info.append(text('strong',s.name),text('small',`${s.county} · ${s.grades} · ${s.quality.officialDirectoryListed ? "AIMS directory-listed (snapshot)" : "Legacy seed only"} · ${s.review ? "User-reviewed URL" : s.publishedWebsite?.website ? "Directory-sourced website (unverified)" : "Website unresolved"}`));
+   const div=text('div','','registry-row');const info=text('div','','registry-info');info.append(text('strong',s.name),text('small',`${s.county} · ${s.grades} · ${s.quality.officialDirectoryListed ? "AIMS directory-listed (snapshot)" : "Legacy seed only"} · ${s.review ? "User-reviewed URL" : s.publishedWebsite?.website ? "Directory-sourced website (unverified)" : "Website unresolved"}`));
    if(s.publishedWebsite?.website){const label=text('small','Published website: '+s.publishedWebsite.website+' (not independently verified) · ');label.append(link(s.publishedWebsite.sourceUrl,'Source ↗'));info.append(label);}
    const reviewButton=text('button',s.review?'Edit review':'Review source','button outline');reviewButton.type='button';
    reviewButton.addEventListener('click',async()=>{
@@ -185,12 +185,18 @@ async function loadRegistry() {
     catch(e){el('registry-status').textContent='Review not saved: '+e.message;}
    });
    const b=text('button','Add to audit','button outline');b.type='button';b.addEventListener('click',()=>{
-    const existing=el('audit-schools').value.trim();const lines=existing?existing.split('\n'):[];
-    if(lines.some(l=>l.split('|')[0].trim().toLowerCase()===s.name.toLowerCase())){el('registry-status').textContent='Already in the audit list.';return;}
-    if(lines.length>=5){el('registry-status').textContent='Audit limit: 5 schools. Remove one first.';return;}
-    el('audit-schools').value=(existing?existing+'\n':'')+`${s.name} | ${s.review?.officialWebsite||s.publishedWebsite?.website||'https://REPLACE-WITH-OFFICIAL-WEBSITE'}`;el('registry-status').textContent='Added. Confirm the published URL belongs to the correct school before running an audit.';
-    el('audit-schools').focus();
-   });div.append(info,reviewButton,b);return div;
+    const website=s.review?.officialWebsite||s.publishedWebsite?.website||'';
+    if(!website){el('registry-status').textContent=`No website is recorded for ${s.name}. Review its official website first, then add it to the audit.`;return;}
+    const field=el('audit-schools');const existing=field.value.trim();const lines=existing?existing.split('\n'):[];
+    const index=lines.findIndex(l=>l.split('|')[0].trim().toLowerCase()===s.name.toLowerCase());
+    const entry=`${s.name} | ${website}`;
+    if(index>=0){lines[index]=entry;field.value=lines.join('\n');el('registry-status').textContent=`Updated ${s.name} in the audit with ${website}. Confirm the website before running.`;}
+    else {
+      if(lines.length>=5){el('registry-status').textContent='Audit limit: 5 schools. Remove one first.';return;}
+      field.value=[...lines,entry].join('\n');el('registry-status').textContent=`Added ${s.name} with ${website}. Confirm the website before running.`;
+    }
+    field.focus();
+   });const actions=text('div','','registry-actions');actions.append(reviewButton,b);div.append(info,actions);return div;
   });
   replace('registry-list',rows.length?rows:[text('p','No matching records.','empty')]);
   if(data.schools.length>90)el('registry-status').textContent+=` Showing the first 90 of ${data.total}; narrow your search to see others.`;
