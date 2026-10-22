@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { DEMO } from './data/demo.mjs';
 import { validateDataset, summarize } from './lib/analysis.mjs';
+import { createWorksheet } from './lib/worksheet.mjs';
 
 const el = id => document.getElementById(id);
 const state = { data: DEMO, schoolId: 'harbor', platform: 'ChatGPT', topic: 'All topics', visible: 8, filename: 'synthetic-demo' };
@@ -105,16 +106,18 @@ function csvField(v) {
   const safe = /^[\s\uFEFF]*[=+@\-\t\r]/.test(s) ? `'${s}` : s;
   return `"${safe.replaceAll('"', '""')}"`;
 }
+function downloadFile(filename, contents, mime) {
+  const blob = new Blob([contents], { type: mime });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
 function downloadCsv() {
   const r = summarize(state.data, state.schoolId, state.platform);
   const rows = [['school', 'appearances', 'responses', 'appearance_rate', 'dataset_kind', 'platform'],
     ...r.schools.map(s => [s.name,s.hits,s.denominator,(s.rate*100).toFixed(2),state.data.kind,state.platform])];
   const csv = rows.map(row => row.map(csvField).join(',')).join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob); const a = document.createElement('a');
-  a.href = url; a.download = 'schoolvis-visibility.csv'; a.click();
-  // Release locally allocated object URL after the click finishes.
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  downloadFile('schoolvis-visibility.csv', csv, 'text/csv;charset=utf-8');
 }
 async function importFile(file) {
   if (!file) return;
@@ -134,5 +137,6 @@ function init() {
   el('show-more').addEventListener('click', () => { state.visible += 8; render(); });
   el('dataset-file').addEventListener('change', e => { void importFile(e.target.files?.[0]); e.target.value = ''; });
   el('download-report').addEventListener('click', downloadCsv);
+  el('download-worksheet').addEventListener('click', () => downloadFile('schoolvis-audit-worksheet.csv', createWorksheet(state.data), 'text/csv;charset=utf-8'));
 }
 init();
