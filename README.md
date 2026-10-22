@@ -131,3 +131,7 @@ School website lookup no longer uses OpenAI. The code and API route for paid AI 
 ## v0.8.1: Registry card and audit prefilling fixes
 
 Registry cards use stacked information with their action buttons in a dedicated footer, keeping titles and source links readable. **Add to audit** inserts both the school name and its reviewed or published HTTPS website into the audit form, and updates an existing row for the same school. If the registry has no website, it asks for source review rather than inserting a fake placeholder URL. Directory-published websites still require confirmation before a paid audit. No API calls are made by adding a school to the audit form.
+
+## v0.8.2: Competitive landscape presentation
+
+The discovery section now presents school candidates as compact two-column cards with appearance counts, visual bars, and tracked/discovered distinctions. A separate evidence review panel summarizes directory-link provenance and displays unverified numerical claim excerpts. The known name variants `Bryn Mawr School` and `The Bryn Mawr School` are grouped for display; because legacy discovery summaries do not record per-school per-answer IDs, grouped counts are explicitly marked as potentially overlapping and are **not** treated as verified unique-response totals. Exact duplicate claim excerpts are suppressed in the visible list but retained in saved evidence. Neither the underlying extraction engine nor saved audit records is changed.

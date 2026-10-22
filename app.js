@@ -82,15 +82,72 @@ function renderObservations(report) {
 function renderDiscovery() {
   const analysis = state.discovery;
   if (!analysis) {
-    replace('discovery-list',[text('p','No discovery analysis for this dataset. Run or load a v0.4 audit.','empty')]);
-    replace('claim-list',[]);return;
+    replace('discovery-list', [text('p', 'Run or load a live audit to explore the schools appearing in recorded answers.', 'empty')]);
+    replace('claim-list', []);
+    return;
   }
-  const entries = analysis.schools || [];
-  replace('discovery-list', entries.length ? entries.map(s=>text('p',`${s.name} · ${s.responses} / ${analysis.captures.length} responses · ${s.tracked?'Tracked':'Untracked'} · candidate, not independently verified`)) : [text('p','No school candidates could be extracted. Manual review required.','empty')]);
-  const claims=analysis.captures.flatMap(c=>(c.claims||[]).map(x=>({questionId:c.questionId,...x})));
-  const quality=analysis.captures.reduce((a,c)=>{a.maps+=c.citationSummary?.mapSearchLinks||0;a.total+=c.citationSummary?.total||0;return a;},{maps:0,total:0});
-  replace('claim-list',[text('strong',`Evidence review: ${quality.maps} of ${quality.total} cited links are Google Maps searches (not verification). ${claims.length} numerical claim flags.`),...claims.slice(0,10).map(c=>text('p',`${c.questionId}: ${c.excerpt} — unverified`))]);
+  const captures = analysis.captures || [];
+  const total = captures.length;
+  // Combine only well-known naming variants, not approximate names that could describe different schools.
+  const canonical = name => {
+    const v = name.trim().toLowerCase().replace(/^the\s+/, '').replace(/[’]/g, "'");
+    return v === 'bryn mawr school' ? 'Bryn Mawr School' : name.trim();
+  };
+  const merged = new Map();
+  for (const school of analysis.schools || []) {
+    const name = canonical(school.name);
+    const key = name.toLowerCase();
+    const existing = merged.get(key);
+    if (!existing) merged.set(key, {name, responses: school.responses, tracked: !!school.tracked, variants: [school.name]});
+    else {
+      // No response IDs exist in older archives: additive sums are upper bounds, not proven distinct.
+      existing.responses += school.responses;
+      existing.tracked ||= !!school.tracked;
+      existing.variants.push(school.name);
+    }
+  }
+  const schools = [...merged.values()].sort((a,b) => b.responses-a.responses || a.name.localeCompare(b.name));
+  const list = document.createElement('div'); list.className = 'landscape-list';
+  for (const school of schools) {
+    const row = document.createElement('div'); row.className = 'landscape-row';
+    const details = document.createElement('div'); details.className = 'landscape-identity';
+    details.append(text('strong', school.name));
+    if (school.variants.length > 1) details.append(text('small', 'Combined name variants; total may overlap', 'landscape-qualifier'));
+    details.append(text('span', school.tracked ? 'Tracked' : 'Discovered', school.tracked ? 'landscape-status tracked' : 'landscape-status'));
+    const metric = document.createElement('div'); metric.className = 'landscape-metric';
+    const count = Math.min(school.responses, total);
+    metric.append(text('span', `${school.variants.length > 1 ? '≤ ' : ''}${school.responses} / ${total}`, 'landscape-count'));
+    const track = document.createElement('div'); track.className = 'landscape-track';
+    const fill = document.createElement('div'); fill.className = 'landscape-fill';
+    fill.style.width = `${total ? Math.min(100, count / total * 100) : 0}%`;
+    track.append(fill); metric.append(track);row.append(details,metric);list.append(row);
+  }
+  replace('discovery-list', [text('p', `${schools.length} candidate school names · ${total} recorded responses. These are answer-link appearances, not independently verified recommendations.`, 'landscape-summary'), schools.length ? list : text('p', 'No candidates extracted.', 'empty')]);
+  const claims = captures.flatMap(c => (c.claims || []).map(x => ({questionId:c.questionId, excerpt:String(x.excerpt || '')})));
+  const quality = captures.reduce((v,c) => { v.maps += c.citationSummary?.mapSearchLinks || 0; v.total += c.citationSummary?.total || 0;return v; }, {maps:0,total:0});
+  const evidence = document.createElement('div'); evidence.className = 'landscape-evidence';
+  const head = document.createElement('div'); head.className = 'landscape-evidence-head';
+  head.append(text('h3','Evidence requiring review'),text('span',`${claims.length} raw claim flags`,'landscape-status warning'));evidence.append(head);
+  const ratio = document.createElement('p');ratio.className='landscape-evidence-note';
+  ratio.textContent = `${quality.maps} of ${quality.total} captured links are Google Maps searches, which do not independently support school claims.`;evidence.append(ratio);
+  if (claims.length) {
+    const items = document.createElement('ul');items.className = 'landscape-claims';
+    // Display exact duplicate excerpts only once; preserve all original flags in archived evidence.
+    const seen = new Set();
+    for (const claim of claims) {
+      const key = claim.questionId + ':' + claim.excerpt.toLowerCase().replace(/[^a-z0-9]+/g,' ');
+      if (seen.has(key)) continue;seen.add(key);
+      const li = document.createElement('li');
+      li.append(text('span',claim.questionId,'landscape-question'),text('span',claim.excerpt),text('span','Unverified','landscape-flag'));
+      items.append(li);
+      if (items.children.length >= 8) break;
+    }
+    evidence.append(items);
+  } else evidence.append(text('p','No numerical claims flagged in this sample.','landscape-evidence-note'));
+  evidence.append(text('p','Automated extraction may duplicate, truncate, or misattribute claims. Review original responses before using any claims in a report.','landscape-disclaimer'));
+  replace('claim-list',[evidence]);
 }
+
 function render() {
   const report = summarize(state.data, state.schoolId, state.platform);
   const peers = report.schools.filter(s => s.id !== state.schoolId).sort((a,b) => b.rate-a.rate);
