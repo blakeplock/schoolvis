@@ -80,21 +80,6 @@ function renderObservations(report) {
   el('records-shown').textContent = `Showing ${subset.length} of ${rows.length} responses`;
   el('show-more').hidden = subset.length >= rows.length;
 }
-function initializeLandscapeLocations() {
-  const control = el('landscape-location');
-  const selected = control.value;
-  const choices = [
-    option('all', 'All locations'),
-    option('baltimore-metro', 'Baltimore metro (city + county)'),
-    option('dc', 'Washington, DC'),
-    option('maryland', 'All Maryland counties'),
-    option('Baltimore City', 'Baltimore City'),
-    ...MARYLAND_COUNTIES.map(county => option(county, county)),
-  ];
-  control.replaceChildren(...choices);
-  control.value = choices.some(choice => choice.value === selected) ? selected : 'all';
-}
-
 function renderDiscovery() {
   const analysis = state.discovery;
   if (!analysis) {
@@ -124,6 +109,10 @@ function renderDiscovery() {
   }
   const schools = [...merged.values()].sort((a,b) => b.responses-a.responses || a.name.localeCompare(b.name));
   const locationControl=el('landscape-location');
+  const selectedLocation=locationControl.value;
+  const locationOptions = [option('all','All locations'),option('baltimore-metro','Baltimore metro (city + county)'),option('dc','Washington, DC'),option('maryland','All Maryland counties'),option('Baltimore City','Baltimore City'),...MARYLAND_COUNTIES.map(c=>option(c,c)),option('unknown','Unknown location')];
+  locationControl.replaceChildren(...locationOptions);
+  locationControl.value=selectedLocation && locationOptions.some(o=>o.value===selectedLocation)?selectedLocation:'all';
   const filtered=filterSchools(schools,{gender:el('landscape-gender').value,religion:el('landscape-religion').value,location:locationControl.value});
   el('landscape-filter-note').textContent=`Showing ${filtered.length} of ${schools.length} discovered names · gender classified for ${knownCount(schools,'gender')} · affiliation classified for ${knownCount(schools,'religion')}. Categories are preliminary, not independently verified; unknown schools remain available under Unknown.`;
 
@@ -289,7 +278,6 @@ async function matchDiscovered() {
  }catch { /* offline imported observations have no lookup service */ }
 }
 function init() {
-  initializeLandscapeLocations();
   for (const id of ['landscape-gender','landscape-religion','landscape-location']) el(id).addEventListener('change',renderDiscovery);
   el('landscape-reset').addEventListener('click',()=>{for(const id of ['landscape-gender','landscape-religion','landscape-location'])el(id).value='all';renderDiscovery();});
   validateDataset(state.data); setupOptions(); render(); void auditStatus(); void loadRegistry();

@@ -143,3 +143,8 @@ The Discovered competitive landscape offers combinable enrollment (boys/girls/co
 ## v0.8.4: Simplified landscape location filters
 
 The Discovered competitive landscape panel now combines Region and County into a single Location selector. It includes all 23 Maryland counties (even counties not represented in current results), Baltimore City, Washington DC, a Baltimore-metro grouping, statewide Maryland, and Unknown location. Filters are applied to provisional data without new API requests. Empty matches display an explicit message. Enrollment and affiliation controls are unchanged.
+
+
+## Dark editorial theme
+
+The interface uses **Crimson Text** for headings and key figures and **Work Sans** for body text, controls, and data. It uses a dark palette and accessible focus outlines. Fonts load from Google Fonts (`fonts.googleapis.com` and `fonts.gstatic.com`); if offline, Georgia and system sans-serif fallbacks are used. Font assets are delivered under the [SIL Open Font License](https://openfontlicense.org/), distinct from the Apache-2.0 application code. Loading Google Fonts makes a third-party network request; for a future fully offline build, self-host reviewed OFL font files and document their license. No npm dependencies are added.

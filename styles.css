@@ -34,3 +34,70 @@
 @media(max-width:520px){.landscape-row{padding:10px}.landscape-metric{flex-basis:70px}.landscape-claims li{flex-wrap:wrap}.landscape-flag{margin-left:0}}
 
 .landscape-filters{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:14px 0 10px}.landscape-filters label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:700;color:#4d6471;flex:1 1 150px;min-width:0}.landscape-filters select{width:100%;min-width:0;padding:9px;border:1px solid #d8e2e8;border-radius:7px;background:#fff;color:#193545;font-size:12px}.landscape-filters button{white-space:nowrap}.landscape-filter-note{margin:8px 0 15px;font-size:11px;color:#657c88}@media(max-width:600px){.landscape-filters label{flex-basis:calc(50% - 8px)}.landscape-filters button{width:100%}}
+
+
+/* SchoolVis dark editorial theme — Crimson Text + Work Sans. */
+:root {
+  color-scheme: dark;
+  --sv-background: #0a111b;
+  --sv-sidebar: #080f18;
+  --sv-surface: #131e2b;
+  --sv-surface-raised: #1a2837;
+  --sv-surface-soft: #101a26;
+  --sv-border: #304051;
+  --sv-text: #edf1f3;
+  --sv-muted: #b0c1cd;
+  --sv-subtle: #91a8b7;
+  --sv-accent: #67d7c8;
+  --sv-accent-ink: #061b1b;
+  font-family: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color:var(--sv-text); background:var(--sv-background);
+}
+body { background:var(--sv-background); color:var(--sv-text); }
+button, input, select, textarea { font-family:"Work Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+h1, h2, h3, .page-head h1, .panel h2, .panel h3 { font-family:"Crimson Text",Georgia,serif; font-weight:600; letter-spacing:-.015em; }
+.page-head h1 { font-size:clamp(2.25rem,3.2vw,3.25rem); line-height:1.08; }
+.panel h2 { font-size:1.7rem; line-height:1.17; }
+.panel h3 {font-size:1.24rem;line-height:1.2;}
+.metric-number{font-family:"Crimson Text",Georgia,serif;font-size:3.35rem;font-weight:600;letter-spacing:-.035em;}
+.brand strong {font-family:"Crimson Text",Georgia,serif;font-size:1.8rem;letter-spacing:-.025em;}
+.sidebar { background:var(--sv-sidebar); border-right:1px solid var(--sv-border);color:var(--sv-text); }
+.brand-logo {background:var(--sv-accent);color:var(--sv-accent-ink);}
+.brand-logo span{color:var(--sv-accent-ink);}
+.brand small,.side-section-label,.eyebrow,.metric-label,.filters label,.small-label {color:var(--sv-subtle);}
+.nav-item {color:var(--sv-muted);}
+.nav-item:hover,.nav-item:focus-visible{background:#203447;color:#fff;}
+.nav-item.active {background:#24463f;color:#dcfff7;}
+.side-note,.side-note.muted {color:var(--sv-muted);}
+.license-pill{background:#203044;color:#d5e4ea;border:1px solid var(--sv-border);}
+.top-bar {border-color:var(--sv-border);}
+.status-bubble,.filters,.metric,.panel {background:var(--sv-surface);border-color:var(--sv-border);color:var(--sv-text);box-shadow:0 4px 18px #00000024;}
+.status-bubble,.page-head p,.filter-caption,.filter-caption small,.metric-footer,.footnote,.section-intro,.method-grid p,footer,.bar-head span,.landscape-summary,.landscape-filter-note{color:var(--sv-muted);}
+.metric-label,.side-section-label,.eyebrow{font-weight:700;}
+.button.primary {background:var(--sv-accent);color:var(--sv-accent-ink);border-color:var(--sv-accent);}
+.button.outline,.button.subtle{background:var(--sv-surface-raised);color:var(--sv-text);border-color:#4c6476;}
+.button:hover{filter:brightness(1.12);}
+.button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible {outline:2px solid:#f5c96e;outline-offset:3px;}
+select,.landscape-filters select,.registry-controls input,.registry-controls select,.live-panel input,.live-panel textarea {background:#0d1825;color:var(--sv-text);border:1px solid #4c6476;border-radius:8px;}
+select option{background:#0d1825;color:var(--sv-text);}
+.registry-controls label,.live-panel label,.landscape-filters label{color:var(--sv-muted);}
+.notice{background:#362b19;border-color:#77643d;border-left-color:#ecc278;color:#f8e0ae;}
+.notice.observed{background:#12352f;color:#d2f9e8;border-color:#2b6c5e;border-left-color:var(--sv-accent);}
+.tag,.pill,.landscape-status {background:#283b4c;color:#e1edf3;}
+.pill.hit,.landscape-status.tracked{background:#17443a;color:#a5f1d8;}
+.pill.miss,.landscape-status.warning,.gap .zero{background:#45311d;color:#f5ca94;}
+.bar-track,.landscape-track{background:#2a3c4b;}
+.bar-fill{background:#759bab;}
+.bar-fill.selected,.landscape-fill{background:var(--sv-accent);}
+.gap,.observation,.registry-row,.landscape-row,.landscape-evidence,.landscape-claims li {background:var(--sv-surface-soft);border-color:var(--sv-border);color:var(--sv-text);}
+.gap small,.gap p,.registry-info small,.landscape-evidence-note,.landscape-disclaimer,.landscape-qualifier,.landscape-flag {color:var(--sv-muted);}
+.gap a,.observation-details a,footer a {color:#80ded6;}
+.empty{background:var(--sv-surface-soft);color:var(--sv-muted);border:1px solid var(--sv-border);}
+.observation-title,.bar-head strong,.registry-info strong,.landscape-identity strong,.landscape-count{color:var(--sv-text);}
+.observation-details{border-color:var(--sv-border);color:var(--sv-muted);}
+.observation summary:before{color:var(--sv-accent);}
+.landscape-question{background:#2d4050;color:#e3f0f4;}
+.landscape-evidence{background:#142332;}
+.landscape-filter-note{line-height:1.5;}
+::selection{background:#317b73;color:#fff;}
+@media (max-width:710px){.page-head h1{font-size:2.4rem}.panel h2{font-size:1.55rem}}
