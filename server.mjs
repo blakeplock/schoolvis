@@ -16,7 +16,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const archive = join(homedir(), '.schoolvis', 'audits');
 const assets = new Map([
   ['/', ['index.html','text/html; charset=utf-8']], ['/index.html',['index.html','text/html; charset=utf-8']],
-  ['/mdc-peers.js',['mdc-peers.js','text/javascript; charset=utf-8']],
+  ['/lib/mdc-audit-bridge.mjs',['lib/mdc-audit-bridge.mjs','text/javascript; charset=utf-8']], ['/mdc-peers.js',['mdc-peers.js','text/javascript; charset=utf-8']],
   ['/website.js',['website.js','text/javascript; charset=utf-8']],
   ['/styles.css',['styles.css','text/css; charset=utf-8']], ['/workflow.js',['workflow.js','text/javascript; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']], ['/console.js',['console.js','text/javascript; charset=utf-8']],
   ['/school-picker.js',['school-picker.js','text/javascript; charset=utf-8']],

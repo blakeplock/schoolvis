@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 const e=id=>document.getElementById(id);
 const state={schools:[],selected:new Set(),home:'',radius:15,term:''};
+import { buildAuditSelection } from './lib/mdc-audit-bridge.mjs';
 try{const x=JSON.parse(localStorage.getItem('schoolvis-mdc-peers-v1')||'{}');if(Array.isArray(x.peers))state.selected=new Set(x.peers.filter(y=>typeof y==='string'));if(typeof x.home==='string')state.home=x.home;}catch{}
 function persist(){try{localStorage.setItem('schoolvis-mdc-peers-v1',JSON.stringify({home:state.home,peers:[...state.selected]}));}catch{}}
 function node(tag,value){const n=document.createElement(tag);n.textContent=String(value);return n;}
@@ -17,3 +18,36 @@ function render(){const home=state.schools.find(s=>s.id===state.home);const avai
 }
 fetch('/api/geo-schools').then(r=>{if(!r.ok)throw Error('Directory unavailable');return r.json()}).then(data=>{state.schools=data.schools;const select=e('mdc-home');select.replaceChildren(node('option','Select a home school'));select.firstChild.value='';for(const s of state.schools){const o=node('option',`${s.name} — ${s.county}${s.lat===null?' (location pending)':''}`);o.value=s.id;select.append(o)}if(state.schools.some(s=>s.id===state.home))select.value=state.home;else state.home='';render()}).catch(err=>e('mdc-summary').textContent=err.message);
 e('mdc-home').addEventListener('change',ev=>{state.home=ev.target.value;state.selected.delete(state.home);persist();render()});e('mdc-radius').addEventListener('change',ev=>{state.radius=Number(ev.target.value);render()});e('mdc-query').addEventListener('input',ev=>{state.term=ev.target.value;render()});e('mdc-clear').addEventListener('click',()=>{state.selected.clear();persist();render()});
+
+// Explicitly prepare a paid audit from the geographic selection; never run a provider request implicitly.
+async function prepareCompetitiveAudit(){
+ const status=e('mdc-audit-status');
+ const button=e('mdc-prepare-audit');button.disabled=true;
+ status.textContent='Checking official-site candidates against the local directory…';
+ try {
+  const ids=[state.home,...state.selected];
+  const unique=[...new Set(ids)].filter(Boolean);
+  const records=[];
+  for(const id of unique){
+   const match=state.schools.find(x=>x.id===id);
+   if(!match)continue;
+   const res=await fetch('/api/schools?'+new URLSearchParams({q:match.name}));
+   if(!res.ok)throw Error('Could not look up website records');
+   const data=await res.json();
+   const row=data.schools.find(x=>x.id===id);
+   records.push({id,name:match.name,website:row?.review?.officialWebsite||row?.publishedWebsite?.website||'',websiteSource:row?.review?.officialWebsite?'user review':row?.publishedWebsite?.sourceUrl||''});
+  }
+  const prepared=buildAuditSelection(state.home,[...state.selected],records);
+  const field=e('audit-schools');field.value=prepared.lines.join('\n');field.dispatchEvent(new Event('input',{bubbles:true}));
+  const home=state.schools.find(x=>x.id===state.home);
+  const location=home?.state==='DC'?'Washington, DC':home?.county?.includes('Baltimore')?'Baltimore, Maryland':`${home?.county||'Maryland'}, Maryland`;
+  e('audit-location').value=location;
+  status.replaceChildren();
+  const msg=node('p',`${prepared.ready.length} schools prepared (home + selected peers). Review websites before starting paid requests.`);status.append(msg);
+  if(prepared.missing.length){const msg2=node('p',`Website needed for: ${prepared.missing.map(x=>x.name).join('; ')}. Add or correct their official HTTPS websites in the audit form.`);status.append(msg2);}
+  if(prepared.extra.length)status.append(node('p',`${prepared.extra.length} additional peers omitted: the audit currently supports at most five schools including home.`));
+  const setup=e('sv10-setup');setup.hidden=false;const toggle=e('sv10-toggle-setup');toggle?.setAttribute('aria-expanded','true');
+  e('audit').scrollIntoView({behavior:'smooth',block:'start'});
+ }catch(error){status.textContent='Unable to prepare audit: '+error.message;}finally{button.disabled=false;}
+}
+e('mdc-prepare-audit').addEventListener('click',()=>{void prepareCompetitiveAudit();});
