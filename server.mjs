@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { createServer } from 'node:http';
+import {validateSearchAudit,runSearchAudit} from './lib/search-visibility.mjs';
 import { readFile, mkdir, writeFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -17,7 +18,7 @@ const archive = join(homedir(), '.schoolvis', 'audits');
 const assets = new Map([
   ['/', ['index.html','text/html; charset=utf-8']], ['/index.html',['index.html','text/html; charset=utf-8']],
   ['/lib/mdc-audit-bridge.mjs',['lib/mdc-audit-bridge.mjs','text/javascript; charset=utf-8']], ['/mdc-peers.js',['mdc-peers.js','text/javascript; charset=utf-8']],
-  ['/website.js',['website.js','text/javascript; charset=utf-8']],
+  ['/website.js',['website.js','text/javascript; charset=utf-8']], ['/search.js',['search.js','text/javascript; charset=utf-8']],
   ['/styles.css',['styles.css','text/css; charset=utf-8']], ['/workflow.js',['workflow.js','text/javascript; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']], ['/console.js',['console.js','text/javascript; charset=utf-8']],
   ['/school-picker.js',['school-picker.js','text/javascript; charset=utf-8']],
   ['/lib/fuzzy-schools.mjs',['lib/fuzzy-schools.mjs','text/javascript; charset=utf-8']],
@@ -50,7 +51,13 @@ async function bodyJson(req) {
 }
 const registry = openRegistry();
 const reconciliation=reconcileDirectory(registry);
-let busy=false;
+let busy=false;let searchBusy=false;
+async function searchCredentials(){
+ const content=await readFile(join(root,'.env'),'utf8').catch(()=> '');
+ const get=name=>{const raw=process.env[name]||content.match(new RegExp('^'+name+'=(.*)$','m'))?.[1]||'';return raw.trim().replace(/^(["'])(.*)\1$/,'$2')};
+ return {login:get('DATAFORSEO_LOGIN'),password:get('DATAFORSEO_PASSWORD')};
+}
+
 const server=createServer(async(req,res)=>{
  const path=req.url?.split('?')[0]||'';
  // Reject cross-site and DNS rebinding attempts. Intended only for local use.
@@ -69,6 +76,17 @@ const server=createServer(async(req,res)=>{
     if(!schools.some(s=>s.id===home))throw Error('Unknown home school');
     json(res,200,nearbySchools(schools,home,radius));
    }catch(e){json(res,400,{error:e.message});}return;
+  }
+  if(req.method==='POST'&&path==='/api/search-audits'){
+   const origin=req.headers.origin;
+   if(origin&&!['http://127.0.0.1:'+port,'http://localhost:'+port].includes(origin)){json(res,403,{error:'Invalid origin'});return;}
+   if(req.headers['content-type']?.split(';')[0]!=='application/json'){json(res,415,{error:'JSON required'});return;}
+   if(searchBusy){json(res,409,{error:'Another search audit is running'});return;}
+   let config;try{config=validateSearchAudit(await bodyJson(req));const ids=new Set(geoSchools(registry).map(x=>x.id));if(config.schools.some(x=>!ids.has(x.id)))throw Error('Only regional registry schools are supported');}catch(e){json(res,400,{error:e.message});return;}
+   const creds=await searchCredentials();if(!creds.login||!creds.password){json(res,400,{error:'Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in your private .env'});return;}
+   searchBusy=true;
+   try{const report=await runSearchAudit(config,creds);const id=new Date().toISOString().replace(/[:.]/g,'-')+'-'+randomUUID();const dir=join(homedir(),'.schoolvis','search-audits');await mkdir(dir,{recursive:true,mode:0o700});await writeFile(join(dir,id+'.json'),JSON.stringify(report,null,2),{mode:0o600,flag:'wx'});json(res,200,{id,report});}
+   catch(e){json(res,502,{error:String(e.message).slice(0,220)+'; some provider requests may have incurred cost'});}finally{searchBusy=false;}return;
   }
   if(req.method==='POST'&&path==='/api/website-check'){
    const origin=req.headers.origin;

@@ -1,0 +1,7 @@
+# SchoolVis v0.11.8 — measured organic search pilot
+
+Use the regional school picker to choose a home school and 1–4 peers. In **Search rankings vs. peers**, click **Use selected schools** and confirm each official domain, then select market and 5, 10, or 20 standardized parent-intent queries. **Run organic search audit** makes billable DataForSEO requests; no automatic requests. Set `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` in your private `.env` and do not commit the file. Use DataForSEO API credentials, not the account password unless they coincide by provider design. 
+
+Results are stored locally under `~/.schoolvis/search-audits/`, with organic result URLs, ranks, provider-reported task costs, collection times, and domain comparisons. Incomplete runs are not saved; provider calls already completed may still be charged. Each query is sent to DataForSEO SERP Google organic live regular, `depth:10`, desktop device, English language, selected market. Rankings are not guaranteed to match an individual's personalized search. Does not include local maps, ads, or AI Overviews.
+
+**Important**: Up to 20 queries per run, one provider request per query. The user must set their own provider spending limits/alerts. This pilot does not supply a hard billing cap, and SERP query coverage is fixed but not complete. No fake search metrics appear. Official school domains are editable and should be reviewed before paid collection. No scraped Google SERP HTML or third-party copyrighted text is reproduced as dataset content.
