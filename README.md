@@ -160,3 +160,8 @@ This release replaces Crimson Text and Work Sans webfonts with a locally availab
 ## v0.8.8: Workbench layout
 
 The UI separates navigation and search/audit configuration from results and evidence. Blue is the single visual accent for active navigation, selections, and selected-school chart data. Public-facing chrome omits repository and license marketing, while the Apache-2.0 LICENSE, NOTICE, and contributor requirements remain intact. No application data or collection semantics changed.
+
+
+## v0.9.0: Competition graph pilot
+
+Competition Discovery now includes a local SVG co-appearance network, constructed from archived per-response candidate records (or labeled fictional demo observations). An edge means two candidate schools appeared in the **same recorded response**, not that they are proven competitors. Edge counts retain question IDs for auditability. Conservative name normalization merges leading `The`; a proper canonical registry crosswalk is still future work. Use the school chips to select 2–5 nodes, then **Use selected schools in audit** to prefill the audit form from locally available published or reviewed websites. Missing websites remain explicit `REVIEW` placeholders and must be verified prior to a paid audit. Filtering changes visible nodes; the selected comparison set persists until page refresh. No graph library, external requests, or paid API calls are required to explore the graph. The overview is not a claim of independent verification.
