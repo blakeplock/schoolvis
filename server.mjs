@@ -13,7 +13,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const archive = join(homedir(), '.schoolvis', 'audits');
 const assets = new Map([
   ['/', ['index.html','text/html; charset=utf-8']], ['/index.html',['index.html','text/html; charset=utf-8']],
-  ['/styles.css',['styles.css','text/css; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']],
+  ['/styles.css',['styles.css','text/css; charset=utf-8']], ['/workflow.js',['workflow.js','text/javascript; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']],
   ['/lib/analysis.mjs',['lib/analysis.mjs','text/javascript; charset=utf-8']],
   ['/lib/competition-graph.mjs',['lib/competition-graph.mjs','text/javascript; charset=utf-8']],
   ['/lib/landscape-filters.mjs',['lib/landscape-filters.mjs','text/javascript; charset=utf-8']],
