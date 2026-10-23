@@ -10,9 +10,9 @@ async function search(){
  if(q.length<2){status.textContent='Type at least two characters.';return;}
  status.textContent='Searching local school records…';
  try{const response=await fetch('/api/national-schools?q='+encodeURIComponent(q));if(!response.ok)throw Error('Lookup unavailable');const data=await response.json();if(current!==serial)return;
- if(!data.loaded){status.textContent='National registry not loaded. Download the NCES 2023–24 public-use text ZIP, then run: python3 scripts/import-nces.py ~/Downloads/YOUR_FILE.zip';return;}
- status.textContent=`${data.schools.length} matching schools shown · NCES 2023–24 (historical records)`;
- for(const s of data.schools){const b=node('button',s.name);b.type='button';b.className='sv-national-result';b.append(node('small',`${s.city}, ${s.state} ${s.zip||''} · NCES ID: ${s.id}`));b.addEventListener('click',()=>{field.value=s.name;results.replaceChildren();selected.hidden=false;selected.replaceChildren(node('strong',s.name),node('p',`${s.city}, ${s.state} · NCES identifier ${s.id} · Source: PSS ${s.survey}`),node('p','Official school website not available from this dataset; verify the correct domain before checking it.'));status.textContent='School selected. Enter its verified HTTPS website below to run the check.';});results.append(b);}
+ if(!data.loaded){status.textContent='National registry not loaded. Run: python3 scripts/import-wikidata.py (CC0 Wikidata records; incomplete coverage).';return;}
+ status.textContent=`${data.schools.length} matching schools shown · Wikidata CC0 candidates (incomplete coverage)`;
+ for(const s of data.schools){const b=node('button',s.name);b.type='button';b.className='sv-national-result';b.append(node('small',`${s.city}, ${s.state} ${s.zip||''} · Wikidata: ${s.id}`));b.addEventListener('click',()=>{field.value=s.name;results.replaceChildren();selected.hidden=false;selected.replaceChildren(node('strong',s.name),node('p',`${s.city}, ${s.state} · Wikidata ${s.id} · Website candidate is unverified`),node('p',s.website_candidate ? `Possible website (unverified): ${s.website_candidate}` : 'No website candidate found. Enter and verify the official website manually.'));status.textContent='School selected. Enter its verified HTTPS website below to run the check.';});results.append(b);}
  }catch{if(current===serial)status.textContent='Search failed. Check the local server.';}
 }
 field.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(search,180)});

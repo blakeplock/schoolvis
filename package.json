@@ -15,6 +15,6 @@
     "check:licenses": "node scripts/check-licenses.mjs",
     "check": "npm run lint && npm test && npm run check:licenses && npm audit --audit-level=high",
     "import:worksheet": "node scripts/import-worksheet.mjs",
-    "import:nces": "python3 scripts/import-nces.py"
+    "import:wikidata": "python3 scripts/import-wikidata.py"
   }
 }

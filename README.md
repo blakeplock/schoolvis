@@ -193,13 +193,10 @@ The customer UI is now one dashboard with optional school/audit setup. Search ra
 
 Opt-in HTTPS homepage metadata and robots.txt checks can be run locally. No AI requests are used. Requests are DNS-pinned and block private or unsupported address ranges; redirects are never followed. The result is a snapshot, not a search ranking, indexing verification, Lighthouse audit, or security certification. Search rankings remain unavailable pending a vetted provider.
 
-## National NCES private-school search (v0.11.1)
+## National school candidate search (v0.11.1) — CC0 Wikidata
 
-SchoolVis supports the NCES Private School Universe Survey 2023–24 public-use data (September 2026). This is a historical federal collection, not a live national census. Download the **Text File ZIP** from https://nces.ed.gov/surveys/pss/pssdata.asp (2023–24 row). Then run from the project folder:
+The local search endpoint and UI use named school candidate records sourced **only from Wikidata structured data (CC0)**. Wikipedia private-school categories are traversed solely to find article-linked Wikidata QIDs; **no Wikipedia text, categories, or descriptions are persisted**. This does not establish comprehensive coverage, whether a school is currently operating, its private-school status, or the ownership of any website candidate.
 
-```bash
-python3 scripts/import-nces.py ~/Downloads/YOUR_NCES_FILE.zip
-npm start
-```
+Run `python3 scripts/import-wikidata.py` from the repo folder with network access, then `npm start`. Optional `--max-categories 100 --max-schools 1500` bounds the import to respect API usage. The importer uses HTTPS Wikimedia APIs and can take time; rerunning refreshes the CC0 candidate table in `~/.schoolvis/schools.sqlite`. Records are provenance-stamped with Wikidata QID, source URL, retrieval time, provider, and CC0 rights; URLs from P856 remain unverified.
 
-The importer accepts the official CSV (directly or within its archive), requires recognized school ID/name/city/state fields, and refuses mismatched layouts rather than guessing. It stores national records in `~/.schoolvis/schools.sqlite`, separate from the original Maryland/DC identity table. The website checker now offers national lookup; **NCES records do not imply verified website ownership** and URLs remain manually confirmed. The app does not ship with a national dataset until the NCES archive is imported locally. No external search or OpenAI API is used for school lookup.
+This replaces the previously proposed NCES PSS import, which is **not authorized for this identifiable directory use**. Existing NCES records, if manually imported earlier, are neither read nor deleted by this version; they are ignored. Do not run the old NCES importer.
