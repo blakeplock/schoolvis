@@ -1,0 +1,5 @@
+school_id,registry_name,reason,next_action,known_address,official_source
+mdc-lab-school-of-washington-washington-dc,Lab School of Washington,not in DC dataset,Multiple campuses; choose Reservoir campus as reference if desired,"4759 Reservoir Road NW, Washington, DC 20007",https://www.labschool.org/contact-us-and-directions
+mdc-mysa-school-washington-dc,MYSA School,not in DC dataset,Current campus address and status require direct confirmation,,
+mdc-milton-gottesman-jewish-day-school-of-the-nation-s-capital-washington-dc,Milton Gottesman Jewish Day School of the Nation's Capital,not in DC dataset,Two campuses; choose explicitly North or South reference,"6045 16th Street NW (North); 4715 16th Street NW (South), Washington, DC 20011",https://www.miltongottesman.org/
+mdc-st-patrick-s-episcopal-day-school-washington-dc,St. Patrick's Episcopal Day School,multiple possible school/campus matches,Two campuses; Whitehaven suggested primary reference pending geocode,"4700 Whitehaven Parkway NW (Whitehaven); 4590 MacArthur Boulevard NW (MacArthur), Washington, DC 20007",https://www.stpatsdc.org/
