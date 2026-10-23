@@ -16,3 +16,11 @@ test('does not pretend unlinked school mentions are recommendations',()=>{
  const a=analyzeCapture('A school might be discussed negatively. Gilman School was mentioned.',[],[]);
  assert.equal(a.candidates.length,0);
 });
+test('attributes claim only to preceding linked school section and preserves uncertainty',()=>{
+ const answer='Schools to consider:\n**[Gilman School](https://www.example.org/gilman)**\nSAT score of 1345\n**[McDonogh School](https://www.example.org/mcdonogh)**\nACT score of 28';
+ const result=analyzeCapture(answer);
+ assert.equal(result.claims[0].schoolName,'Gilman School');
+ assert.equal(result.claims[1].schoolName,'McDonogh School');
+ const loose=analyzeCapture('SAT score of 1345');
+ assert.equal(loose.claims[0].schoolName,null);
+});

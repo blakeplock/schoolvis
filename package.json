@@ -1,6 +1,6 @@
 {
   "name": "school-ai-discovery",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "description": "Privacy-first prototype for independent-school visibility in AI recommendations",
   "type": "module",
   "license": "Apache-2.0",
