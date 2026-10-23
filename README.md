@@ -180,3 +180,7 @@ The UI separates the existing registry search, observed competitor graph, audit 
 
 ### v0.9.4 school search UX
 Step 1 provides locally ranked school-name suggestions populated from the registry API, with an explicit selection and optional audit-prefill when a recorded website exists. Step 2 contains the previous full school registry search and existing competitor filters and graph. Classifications and websites remain provisional.
+
+### v0.9.5 workflow placement
+
+Step 3 (Configure an audit) contains the discovered-school enrollment, affiliation, and location filters. Step 4 (Explore intelligence) contains the discovered competitive landscape, graph, relationship inspector, and evidence. Control IDs and data-processing behavior are unchanged. The selected-school transfer action navigates back to Step 3.
