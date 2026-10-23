@@ -83,37 +83,76 @@ function renderObservations(report) {
 }
 let graphSelection = new Set();
 let graphFocus = null;
+const graphPositions = new Map();
+let graphView = {x:0,y:0,scale:1};
 function drawCompetitionGraph() {
   const panel=el('competition-graph'); if(!panel)return;
   const graph=buildCompetitionGraph(state.data,state.discovery,state.platform);
   const visible=filterSchools(graph.nodes,{gender:el('landscape-gender').value,religion:el('landscape-religion').value,location:el('landscape-location').value});
-  const allowed=new Set(visible.map(n=>n.id));const edges=graph.edges.filter(e=>allowed.has(e.source)&&allowed.has(e.target));
+  const allowed=new Set(visible.map(n=>n.id)); const edges=graph.edges.filter(e=>allowed.has(e.source)&&allowed.has(e.target));
   panel.replaceChildren();
   panel.append(text('p',`${visible.length} schools · ${edges.length} observed co-appearance links · ${graph.responses} captured responses`, 'graph-caption'));
   if(!visible.length){panel.append(text('p','No schools match these filters.','empty'));return;}
-  const width=800,height=400,cx=400,cy=195;
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('viewBox',`0 0 ${width} ${height}`);svg.setAttribute('role','img');svg.setAttribute('aria-label','School co-appearance network; select schools using the buttons below');svg.classList.add('competition-svg');
-  const positions=new Map();const nodes=visible.slice(0,36);
-  nodes.forEach((n,i)=>{const angle=2*Math.PI*i/nodes.length-Math.PI/2;const radial=nodes.length<7?140: i%2===0?147:182;positions.set(n.id,{x:cx+radial*Math.cos(angle)*1.72,y:cy+radial*Math.sin(angle)});});
-  const ns='http://www.w3.org/2000/svg';
-  const shape=(tag,attrs)=>{const node=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))node.setAttribute(k,String(v));return node;};
-  for(const e of edges){const a=positions.get(e.source),b=positions.get(e.target);if(!a||!b)continue;const line=shape('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#56687b','stroke-opacity':Math.min(.85,.2+e.count*.12),'stroke-width':Math.min(5,1+e.count)});svg.append(line);}
-  for(const n of nodes){const pos=positions.get(n.id);const chosen=graphSelection.has(n.id);const circle=shape('circle',{cx:pos.x,cy:pos.y,r:chosen?12:Math.min(14,6+n.appearances*.9),fill:chosen?'#60a5fa':n.trackedId?'#d0dae5':'#8192a4',stroke:chosen?'#bfdcff':'#18232f','stroke-width':2});circle.setAttribute('tabindex','0');circle.setAttribute('role','button');circle.setAttribute('aria-label',`Select ${n.name}`);circle.style.cursor='pointer';const selectNode=()=>{if(graphSelection.has(n.id))graphSelection.delete(n.id);else if(graphSelection.size<5)graphSelection.add(n.id);else{el('graph-message').textContent='Select no more than five schools.';return;}graphFocus=n.id;drawCompetitionGraph();};circle.addEventListener('click',selectNode);circle.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectNode();}});svg.append(circle);const title=shape('title',{});title.textContent=`${n.name}, ${n.appearances} appearances`;circle.append(title);}
-  panel.append(svg);
-  if(visible.length>36)panel.append(text('p','Showing the top 36 nodes by appearances. All matching schools remain selectable below.','graph-caption'));
-  const selected=text('div','','graph-selection');
-  selected.append(text('p','Select schools for the next audit · maximum 5, including your own school','graph-caption'));
-  const list=text('div','','graph-node-list');
-  for(const n of visible){const button=document.createElement('button');button.type='button';button.className='graph-node-button'+(graphSelection.has(n.id)?' selected':'');button.setAttribute('aria-pressed',String(graphSelection.has(n.id)));button.textContent=`${graphSelection.has(n.id)?'✓ ':'+ '}${n.name} · ${n.appearances}`;
-    button.addEventListener('click',()=>{if(graphSelection.has(n.id))graphSelection.delete(n.id);else if(graphSelection.size<5)graphSelection.add(n.id);else {el('graph-message').textContent='Select no more than five schools.';return;}graphFocus=n.id;drawCompetitionGraph();});list.append(button);
+  const nodes=visible.slice(0,48), ids=new Set(nodes.map(n=>n.id));
+  const renderedEdges=edges.filter(e=>ids.has(e.source)&&ids.has(e.target));
+  const width=900,height=570,ns='http://www.w3.org/2000/svg';
+  const shape=(tag,attrs={})=>{const node=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))node.setAttribute(k,String(v));return node;};
+  // A deterministic force layout, computed only from recorded edges. No external library.
+  const positions=new Map(); const count=nodes.length;
+  nodes.forEach((n,i)=>{const prev=graphPositions.get(n.id);const a=2*Math.PI*i/count-Math.PI/2;positions.set(n.id,prev?{...prev}:{x:450+Math.cos(a)*Math.min(290,100+count*9),y:285+Math.sin(a)*Math.min(210,85+count*6)});});
+  const degree=new Map(nodes.map(n=>[n.id,0]));for(const e of renderedEdges){degree.set(e.source,degree.get(e.source)+1);degree.set(e.target,degree.get(e.target)+1);}
+  for(let iteration=0;iteration<120;iteration++){
+    const force=new Map(nodes.map(n=>[n.id,{x:0,y:0}]));
+    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+      const a=positions.get(nodes[i].id),b=positions.get(nodes[j].id);let dx=b.x-a.x,dy=b.y-a.y;const d2=Math.max(160,dx*dx+dy*dy),d=Math.sqrt(d2),f=Math.min(13,45000/d2);
+      const ax=f*dx/d,ay=f*dy/d;force.get(nodes[i].id).x-=ax;force.get(nodes[i].id).y-=ay;force.get(nodes[j].id).x+=ax;force.get(nodes[j].id).y+=ay;
+    }
+    for(const e of renderedEdges){const a=positions.get(e.source),b=positions.get(e.target);const dx=b.x-a.x,dy=b.y-a.y,d=Math.max(1,Math.hypot(dx,dy)),f=(d-190)*.009;force.get(e.source).x+=f*dx/d;force.get(e.source).y+=f*dy/d;force.get(e.target).x-=f*dx/d;force.get(e.target).y-=f*dy/d;}
+    for(const n of nodes){const pos=positions.get(n.id),f=force.get(n.id);pos.x=Math.max(95,Math.min(805,pos.x+Math.max(-7,Math.min(7,f.x+(450-pos.x)*.003))));pos.y=Math.max(55,Math.min(500,pos.y+Math.max(-7,Math.min(7,f.y+(270-pos.y)*.003))));}
   }
-  selected.append(list);panel.append(selected);
-  const details=text('div','','graph-detail');const focus=graph.nodes.find(n=>n.id===graphFocus)||nodes[0];if(focus){details.append(text('strong',focus.name));const related=edges.filter(e=>e.source===focus.id||e.target===focus.id).sort((a,b)=>b.count-a.count);details.append(text('p',`${focus.appearances} response appearances. ${related.length} linked schools. An edge indicates co-appearance, not a proven competitive relationship.`));for(const e of related.slice(0,5)){const peer=graph.nodes.find(n=>n.id===(e.source===focus.id?e.target:e.source));details.append(text('p',`${peer?.name||'Unknown'} · ${e.count} shared response(s) · ${[...new Set(e.questions.map(q=>q.id))].join(', ')}`));}}
-  panel.append(details);
-  const action=document.createElement('button');action.type='button';action.className='button primary';action.textContent='Use selected schools in audit';action.disabled=graphSelection.size<2;
-  action.addEventListener('click',()=>{void addGraphSchools([...graphSelection].map(id=>graph.nodes.find(n=>n.id===id)).filter(Boolean));});panel.append(action);
-  if(graph.isSynthetic)panel.append(text('p','Fictional demo graph. No actual school relationships measured.','graph-caption'));
+  for(const [id,pos] of positions)graphPositions.set(id,{...pos});
+  const layout=document.createElement('div');layout.className='graph-workspace';
+  const visual=document.createElement('div');visual.className='graph-visual';
+  const toolbar=document.createElement('div');toolbar.className='graph-controls';
+  const zoomButton=(label,fn)=>{const b=document.createElement('button');b.type='button';b.className='graph-control';b.textContent=label;b.addEventListener('click',fn);return b;};
+  const svg=shape('svg',{viewBox:`0 0 ${width} ${height}`,role:'group','aria-label':'Interactive school co-appearance network. Tab to nodes and press Enter to select.'});svg.classList.add('competition-svg');
+  const camera=shape('g',{transform:`translate(${graphView.x} ${graphView.y}) scale(${graphView.scale})`});svg.append(camera);
+  const refreshCamera=()=>camera.setAttribute('transform',`translate(${graphView.x} ${graphView.y}) scale(${graphView.scale})`);
+  toolbar.append(zoomButton('+',()=>{graphView.scale=Math.min(3,graphView.scale*1.2);refreshCamera();}),zoomButton('−',()=>{graphView.scale=Math.max(.5,graphView.scale/1.2);refreshCamera();}),zoomButton('Reset view',()=>{graphView={x:0,y:0,scale:1};refreshCamera();}));
+  visual.append(toolbar,svg);
+  let drag=null,moved=false;
+  const lines=new Map();
+  function syncEdges(){for(const e of renderedEdges){const a=positions.get(e.source),b=positions.get(e.target),line=lines.get(e);if(line){line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);}}}
+  for(const e of renderedEdges){const a=positions.get(e.source),b=positions.get(e.target);const line=shape('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#536778','stroke-opacity':Math.min(.85,.22+e.count*.07),'stroke-width':Math.min(5,1+Math.sqrt(e.count))});lines.set(e,line);camera.append(line);}
+  const toggle=(id)=>{if(graphSelection.has(id))graphSelection.delete(id);else if(graphSelection.size<5)graphSelection.add(id);else{el('graph-message').textContent='Select no more than five schools.';return;}graphFocus=id;drawCompetitionGraph();};
+  const groups=new Map();
+  for(const n of nodes){const pos=positions.get(n.id),chosen=graphSelection.has(n.id);const group=shape('g',{transform:`translate(${pos.x} ${pos.y})`,tabindex:'0',role:'button','aria-label':`${n.name}, ${n.appearances} appearances. Press Enter to select.`, 'aria-pressed':String(chosen)});group.classList.add('graph-node');
+    const radius=Math.max(14,Math.min(25,12+Math.sqrt(n.appearances)*2));const circle=shape('circle',{r:radius,fill:chosen?'#2563eb':n.trackedId?'#9eafc0':'#526477',stroke:graphFocus===n.id?'#93c5fd':'#b2bdc9','stroke-width':graphFocus===n.id?3:1.2});group.append(circle);
+    const label=shape('text',{x:0,y:radius+17,'text-anchor':'middle','font-size':'12',fill:'#eaf0f6','font-weight':chosen?650:500});label.textContent=n.name;group.append(label);
+    const tip=shape('title');tip.textContent=`${n.name} · ${n.appearances} responses`;group.append(tip);
+    group.addEventListener('click',()=>{if(!moved)toggle(n.id);moved=false;});group.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(n.id);}});
+    group.addEventListener('pointerdown',event=>{if(event.button!==0)return;event.stopPropagation();drag={id:n.id,x:event.clientX,y:event.clientY,px:pos.x,py:pos.y};moved=false;group.setPointerCapture(event.pointerId);});
+    group.addEventListener('pointermove',event=>{if(!drag||drag.id!==n.id)return;const rect=svg.getBoundingClientRect();const dx=(event.clientX-drag.x)*width/rect.width/graphView.scale,dy=(event.clientY-drag.y)*height/rect.height/graphView.scale;if(Math.hypot(dx,dy)>3)moved=true;pos.x=Math.max(65,Math.min(835,drag.px+dx));pos.y=Math.max(35,Math.min(525,drag.py+dy));graphPositions.set(n.id,{...pos});group.setAttribute('transform',`translate(${pos.x} ${pos.y})`);syncEdges();});
+    group.addEventListener('pointerup',()=>{drag=null;});group.addEventListener('pointercancel',()=>{drag=null;moved=false;});camera.append(group);groups.set(n.id,group);
+  }
+  let pan=null;
+  svg.addEventListener('pointerdown',event=>{if(event.target!==svg&&event.target!==camera)return;pan={x:event.clientX,y:event.clientY,ox:graphView.x,oy:graphView.y};svg.setPointerCapture(event.pointerId);});
+  svg.addEventListener('pointermove',event=>{if(!pan)return;const r=svg.getBoundingClientRect();graphView.x=pan.ox+(event.clientX-pan.x)*width/r.width;graphView.y=pan.oy+(event.clientY-pan.y)*height/r.height;refreshCamera();});
+  svg.addEventListener('pointerup',()=>pan=null);svg.addEventListener('pointercancel',()=>pan=null);
+  svg.addEventListener('wheel',event=>{event.preventDefault();graphView.scale=Math.min(3,Math.max(.5,graphView.scale*(event.deltaY>0?.9:1.1)));refreshCamera();},{passive:false});
+  const inspector=document.createElement('aside');inspector.className='graph-inspector';
+  inspector.append(text('p','School inspector','graph-inspector-label'));
+  const focus=graph.nodes.find(n=>n.id===graphFocus)||nodes[0];if(focus){inspector.append(text('h3',focus.name));const related=edges.filter(e=>e.source===focus.id||e.target===focus.id).sort((a,b)=>b.count-a.count);inspector.append(text('p',`${focus.appearances} appearances · ${related.length} linked schools`, 'graph-caption'));
+    inspector.append(text('p','Observed co-appearances (not established competitive relationships)','graph-inspector-label'));
+    const questionNames=new Map((state.data.questions||[]).map(q=>[q.id,q.prompt]));
+    for(const e of related.slice(0,8)){const peer=graph.nodes.find(n=>n.id===(e.source===focus.id?e.target:e.source));const item=document.createElement('details');item.className='graph-relation';const summary=document.createElement('summary');summary.textContent=`${peer?.name||'Unknown'} · ${e.count} shared responses`;item.append(summary);const ids=[...new Set(e.questions.map(q=>q.id))];const q=text('p',ids.map(id=>questionNames.get(id)||id).slice(0,8).join(' • '));item.append(q);inspector.append(item);}
+  }
+  inspector.append(text('p',`Comparison group · ${graphSelection.size}/5`, 'graph-inspector-label'));
+  const chips=document.createElement('div');chips.className='graph-picked';for(const id of graphSelection){const n=graph.nodes.find(n=>n.id===id);if(!n)continue;const b=zoomButton(`${n.name} ×`,()=>toggle(id));chips.append(b);}inspector.append(chips);
+  const action=document.createElement('button');action.type='button';action.className='button primary';action.textContent='Use selected schools in audit';action.disabled=graphSelection.size<2;action.addEventListener('click',()=>{void addGraphSchools([...graphSelection].map(id=>graph.nodes.find(n=>n.id===id)).filter(Boolean));});inspector.append(action);
+  layout.append(visual,inspector);panel.append(layout);
+  if(visible.length>48)panel.append(text('p','Showing the 48 most frequently observed schools; filters can narrow the display.','graph-caption'));
+  if(graph.isSynthetic)panel.append(text('p','Fictional demo graph: relationships shown are invented sample observations.','graph-caption'));
 }
 async function addGraphSchools(schools){
  const rows=[];for(const school of schools){
