@@ -177,3 +177,6 @@ The Competition Graph has 1- and 2-layer breadth-first neighborhoods from the fo
 ## Four-step navigation (v0.9.3)
 
 The UI separates the existing registry search, observed competitor graph, audit configuration, and intelligence reports into four navigable steps. All element IDs, audit request handling, graph controls, and saved local records remain unchanged. Moving through steps does not persist a separate named comparison group; the graph's existing transfer-to-audit behavior is retained.
+
+### v0.9.4 school search UX
+Step 1 provides locally ranked school-name suggestions populated from the registry API, with an explicit selection and optional audit-prefill when a recorded website exists. Step 2 contains the previous full school registry search and existing competitor filters and graph. Classifications and websites remain provisional.
