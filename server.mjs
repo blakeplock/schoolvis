@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { createServer } from 'node:http';
-import {validateSearchAudit,runSearchAudit} from './lib/search-visibility.mjs';
+import {validateSearchAudit,runSearchAudit,knownSchoolDomains,classifySchoolOnly} from './lib/search-visibility.mjs';
+import {verifyChannels,runYoutubeAudit,youtubeQueries} from './lib/youtube-ranking.mjs';
 import { readFile, mkdir, writeFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -77,6 +78,14 @@ const server=createServer(async(req,res)=>{
     json(res,200,nearbySchools(schools,home,radius));
    }catch(e){json(res,400,{error:e.message});}return;
   }
+  if(req.method==='POST'&&path==='/api/youtube-audits'){
+   if(req.headers.origin&&!['http://127.0.0.1:'+port,'http://localhost:'+port].includes(req.headers.origin)){json(res,403,{error:'Invalid origin'});return;}
+   if(req.headers['content-type']?.split(';')[0]!=='application/json'){json(res,415,{error:'JSON required'});return;}
+   if(searchBusy){json(res,409,{error:'A search audit is running'});return;}
+   let config;try{const raw=await bodyJson(req);youtubeQueries(raw.region,Number(raw.queryCount));const schools=verifyChannels(raw.schools);const registryIds=new Set(geoSchools(registry).map(s=>s.id));if(schools.some(s=>!registryIds.has(s.id)))throw Error('Unknown regional school');if(!schools.some(s=>s.channelId))throw Error('Enter at least one confirmed official YouTube channel ID');config={region:raw.region,queryCount:Number(raw.queryCount),schools};}catch(e){json(res,400,{error:e.message});return;}
+   const creds=await searchCredentials();if(!creds.login||!creds.password){json(res,400,{error:'Configure DataForSEO credentials in .env'});return;}
+   searchBusy=true;try{const report=await runYoutubeAudit(config,creds);const id=new Date().toISOString().replace(/[:.]/g,'-')+'-'+randomUUID();const dir=join(homedir(),'.schoolvis','youtube-audits');await mkdir(dir,{recursive:true,mode:0o700});await writeFile(join(dir,id+'.json'),JSON.stringify(report,null,2),{mode:0o600,flag:'wx'});json(res,200,{id,report});}catch(e){json(res,502,{error:String(e.message).slice(0,180)});}finally{searchBusy=false;}return;
+  }
   if(req.method==='POST'&&path==='/api/search-audits'){
    const origin=req.headers.origin;
    if(origin&&!['http://127.0.0.1:'+port,'http://localhost:'+port].includes(origin)){json(res,403,{error:'Invalid origin'});return;}
@@ -85,7 +94,7 @@ const server=createServer(async(req,res)=>{
    let config;try{config=validateSearchAudit(await bodyJson(req));const ids=new Set(geoSchools(registry).map(x=>x.id));if(config.schools.some(x=>!ids.has(x.id)))throw Error('Only regional registry schools are supported');}catch(e){json(res,400,{error:e.message});return;}
    const creds=await searchCredentials();if(!creds.login||!creds.password){json(res,400,{error:'Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in your private .env'});return;}
    searchBusy=true;
-   try{const report=await runSearchAudit(config,creds);const id=new Date().toISOString().replace(/[:.]/g,'-')+'-'+randomUUID();const dir=join(homedir(),'.schoolvis','search-audits');await mkdir(dir,{recursive:true,mode:0o700});await writeFile(join(dir,id+'.json'),JSON.stringify(report,null,2),{mode:0o600,flag:'wx'});json(res,200,{id,report});}
+   try{const report=await runSearchAudit(config,creds);const known=knownSchoolDomains(listSchools(registry,{query:'',county:'',highSchool:false}).map(s=>({id:s.id,name:s.name,website:getSchoolReview(registry,s.id)?.officialWebsite||sourceWebsite(registry,s.id)?.website||''})));report.schoolOnly=classifySchoolOnly(report.captures,config.schools,known);const id=new Date().toISOString().replace(/[:.]/g,'-')+'-'+randomUUID();const dir=join(homedir(),'.schoolvis','search-audits');await mkdir(dir,{recursive:true,mode:0o700});await writeFile(join(dir,id+'.json'),JSON.stringify(report,null,2),{mode:0o600,flag:'wx'});json(res,200,{id,report});}
    catch(e){json(res,502,{error:String(e.message).slice(0,220)+'; some provider requests may have incurred cost'});}finally{searchBusy=false;}return;
   }
   if(req.method==='POST'&&path==='/api/website-check'){
