@@ -200,3 +200,9 @@ The local search endpoint and UI use named school candidate records sourced **on
 Run `python3 scripts/import-wikidata.py` from the repo folder with network access, then `npm start`. Optional `--max-categories 100 --max-schools 1500` bounds the import to respect API usage. The importer uses HTTPS Wikimedia APIs and can take time; rerunning refreshes the CC0 candidate table in `~/.schoolvis/schools.sqlite`. Records are provenance-stamped with Wikidata QID, source URL, retrieval time, provider, and CC0 rights; URLs from P856 remain unverified.
 
 This replaces the previously proposed NCES PSS import, which is **not authorized for this identifiable directory use**. Existing NCES records, if manually imported earlier, are neither read nor deleted by this version; they are ignored. Do not run the old NCES importer.
+
+## v0.11.2 — Wikidata candidate-quality enrichment
+
+After the original CC0 import, run `python3 scripts/enrich-wikidata.py` to enrich the **existing** QIDs in batches. The script adds optional metadata columns without deleting records, preserving local school and audit tables. It records location statements, conservative city matches when directly typed as municipalities, possible dissolution indicators, unverified P856 website claims, and identity-review flags. Candidate state values from the category pass remain **inferred**, not independently verified. No automated school is marked currently operating, private, or website-owned. Each batch commits independently; rerunning is safe. Wikimedia API rate limits are retried with backoff.
+
+Run `python3 scripts/enrich-wikidata.py --report-only` to see counts without network calls. This is a **quality assessment**, not a source of verified website ownership. Existing NCES data is never queried.

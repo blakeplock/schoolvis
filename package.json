@@ -1,6 +1,6 @@
 {
   "name": "school-ai-discovery",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "description": "Privacy-first prototype for independent-school visibility in AI recommendations",
   "type": "module",
   "license": "Apache-2.0",
@@ -15,6 +15,7 @@
     "check:licenses": "node scripts/check-licenses.mjs",
     "check": "npm run lint && npm test && npm run check:licenses && npm audit --audit-level=high",
     "import:worksheet": "node scripts/import-worksheet.mjs",
-    "import:wikidata": "python3 scripts/import-wikidata.py"
+    "import:wikidata": "python3 scripts/import-wikidata.py",
+    "enrich:wikidata": "python3 scripts/enrich-wikidata.py"
   }
 }
