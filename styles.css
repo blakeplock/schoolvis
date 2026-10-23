@@ -246,3 +246,29 @@ body{background:var(--sv-background);color:var(--sv-text)}
 @media(max-width:1180px){.workbench-layout{grid-template-columns:minmax(265px,34fr) minmax(0,66fr)}.workbench-tools{position:static;max-height:none;overflow:visible}}
 @media(max-width:940px){.workbench-layout{grid-template-columns:minmax(0,1fr)}.workbench-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.workbench-tools .live-panel{grid-row:span 2}.workbench-results .metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.workbench-tools{grid-template-columns:minmax(0,1fr)}.workbench-tools .live-panel{grid-row:auto}.workbench-results .metrics{grid-template-columns:1fr}.tool-actions{grid-template-columns:1fr}.tool-actions label.button{grid-column:auto}.main-content{padding-left:14px;padding-right:14px}}
+
+/* BEGIN SCHOOLVIS PAPER WORKBENCH */
+/* SchoolVis paper workbench / charcoal intelligence contrast. */
+:root{--sv-paper:#f7f7f6;--sv-paper-panel:#fff;--sv-paper-edge:#dedede;--sv-paper-ink:#171717;--sv-paper-secondary:#595959;--sv-paper-muted:#777;}
+/* Only the tool zone becomes light. Findings, graphs, navigation remain dark. */
+.workbench-tools{color:var(--sv-paper-ink);background:var(--sv-paper);border:1px solid #e2e2e2;border-radius:10px;padding:12px;scrollbar-color:#c7c7c7 var(--sv-paper);}
+.workbench-tools .tool-panel,.workbench-tools .live-panel,.workbench-tools .filters{background:var(--sv-paper-panel);color:var(--sv-paper-ink);border:1px solid var(--sv-paper-edge);box-shadow:none;border-radius:8px;}
+.workbench-tools .tool-panel-label,.workbench-tools .eyebrow,.workbench-tools .small-label,.workbench-tools .filters label{color:#646464;font-weight:600;letter-spacing:.025em;}
+.workbench-tools .panel h2,.workbench-tools .panel h3,.workbench-tools .tool-panel strong,.workbench-tools .live-panel strong{color:var(--sv-paper-ink);}
+.workbench-tools p,.workbench-tools .section-intro,.workbench-tools .footnote,.workbench-tools .filter-caption,.workbench-tools .filter-caption small,.workbench-tools #audit-message{color:var(--sv-paper-secondary);}
+.workbench-tools .live-panel label,.workbench-tools .registry-controls label,.workbench-tools .landscape-filters label{color:#343434;font-weight:500;}
+.workbench-tools input:not([type=file]),.workbench-tools textarea,.workbench-tools select,.workbench-tools .landscape-filters select,.workbench-tools .registry-controls input,.workbench-tools .registry-controls select,.workbench-tools .live-panel input,.workbench-tools .live-panel textarea{color:#1c1c1c;background:#fff;border:1px solid #d4d4d4;box-shadow:0 1px 1px #00000005;border-radius:6px;}
+.workbench-tools input::placeholder,.workbench-tools textarea::placeholder{color:#8b8b8b;opacity:1;}
+.workbench-tools select option{background:#fff;color:#171717;}
+.workbench-tools .button.primary,.workbench-tools label.button.primary{background:#171717;color:#fafafa;border:1px solid #171717;font-weight:560;}
+.workbench-tools .button.primary:hover,.workbench-tools label.button.primary:hover{background:#313131;filter:none;}
+.workbench-tools .button.outline,.workbench-tools .button.subtle{background:#fff;color:#292929;border:1px solid #d4d4d4;font-weight:520;}
+.workbench-tools .button.outline:hover,.workbench-tools .button.subtle:hover{background:#f1f1f1;filter:none;}
+.workbench-tools .tag,.workbench-tools #api-status{background:#f2f2f2;color:#444;border:1px solid #ddd;}
+.workbench-tools .tool-link{color:#236bc3;text-decoration:none;font-weight:550;}
+.workbench-tools .tool-link:hover{text-decoration:underline;}
+.workbench-tools a:focus-visible,.workbench-tools button:focus-visible,.workbench-tools input:focus-visible,.workbench-tools select:focus-visible,.workbench-tools textarea:focus-visible{outline:2px solid #3679d5;outline-offset:2px;}
+.workbench-tools .tool-panel+.tool-panel{border-top-color:var(--sv-paper-edge);}
+@media(max-width:940px){.workbench-tools{padding:10px;}}
+@media(prefers-color-scheme:dark){.workbench-tools input,.workbench-tools select,.workbench-tools textarea{color-scheme:light;}}
+/* END SCHOOLVIS PAPER WORKBENCH */
