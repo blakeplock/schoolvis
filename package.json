@@ -1,6 +1,6 @@
 {
   "name": "school-ai-discovery",
-  "version": "0.11.0",
+  "version": "0.11.6",
   "description": "Privacy-first prototype for independent-school visibility in AI recommendations",
   "type": "module",
   "license": "Apache-2.0",
@@ -11,9 +11,10 @@
   "scripts": {
     "start": "node server.mjs",
     "test": "node --test",
-    "lint": "node --check app.js && node --check lib/competition-graph.mjs && node --check lib/landscape-filters.mjs && node --check lib/worksheet.mjs && node --check server.mjs && node --check lib/analysis.mjs && node --check data/demo.mjs && node --check data/questions.mjs && node --check scripts/check-licenses.mjs && node --check scripts/import-worksheet.mjs && node --check lib/live-audit.mjs && node --check lib/runner.mjs && node --check lib/discovery.mjs && node --check lib/registry.mjs && node --check data/aims-seed.mjs && node --check lib/registry-quality.mjs && node --check data/aims-official.mjs && node --check data/public-websites.mjs && node --check workflow.js && node --check school-picker.js && node --check lib/fuzzy-schools.mjs && node --check console.js && node --check website.js && node --check lib/website-audit.mjs",
+    "lint": "node --check app.js && node --check lib/competition-graph.mjs && node --check lib/landscape-filters.mjs && node --check lib/worksheet.mjs && node --check server.mjs && node --check lib/analysis.mjs && node --check data/demo.mjs && node --check data/questions.mjs && node --check scripts/check-licenses.mjs && node --check scripts/import-worksheet.mjs && node --check lib/live-audit.mjs && node --check lib/runner.mjs && node --check lib/discovery.mjs && node --check lib/registry.mjs && node --check data/aims-seed.mjs && node --check lib/registry-quality.mjs && node --check data/aims-official.mjs && node --check data/public-websites.mjs && node --check workflow.js && node --check school-picker.js && node --check lib/fuzzy-schools.mjs && node --check console.js && node --check website.js && node --check lib/website-audit.mjs && node --check mdc-peers.js && node --check lib/geo-peers.mjs",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check": "npm run lint && npm test && npm run check:licenses && npm audit --audit-level=high",
-    "import:worksheet": "node scripts/import-worksheet.mjs"
+    "import:worksheet": "node scripts/import-worksheet.mjs",
+    "import:locations": "python3 scripts/import-mdc-locations.py"
   }
 }

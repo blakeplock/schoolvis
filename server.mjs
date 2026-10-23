@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
+import { nearbySchools } from './lib/geo-peers.mjs';
+import { geoSchools } from './lib/registry.mjs';
 import { auditWebsite } from './lib/website-audit.mjs';
 import { validateAuditRequest } from './lib/live-audit.mjs';
 import { runAudit } from './lib/runner.mjs';
@@ -14,6 +16,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const archive = join(homedir(), '.schoolvis', 'audits');
 const assets = new Map([
   ['/', ['index.html','text/html; charset=utf-8']], ['/index.html',['index.html','text/html; charset=utf-8']],
+  ['/mdc-peers.js',['mdc-peers.js','text/javascript; charset=utf-8']],
   ['/website.js',['website.js','text/javascript; charset=utf-8']],
   ['/styles.css',['styles.css','text/css; charset=utf-8']], ['/workflow.js',['workflow.js','text/javascript; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']], ['/console.js',['console.js','text/javascript; charset=utf-8']],
   ['/school-picker.js',['school-picker.js','text/javascript; charset=utf-8']],
@@ -54,6 +57,19 @@ const server=createServer(async(req,res)=>{
  const allowedHost = new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
  if (!allowedHost.has(req.headers.host)) { json(res,403,{error:'Local host only'});return; }
  if (path.startsWith('/api/')) {
+  if(req.method==='GET'&&path==='/api/geo-schools'){
+   const schools=geoSchools(registry);
+   json(res,200,{schools,coverage:{total:schools.length,geocoded:schools.filter(s=>Number.isFinite(s.lat)&&Number.isFinite(s.lon)).length},note:'MD/DC historical AIMS-derived candidates; locations individually sourced and geocoded, not verified current AIMS membership'});return;
+  }
+  if(req.method==='GET'&&path==='/api/geo-nearby'){
+   try{
+    const u=new URL(req.url,`http://127.0.0.1:${port}`);
+    const home=u.searchParams.get('home')||'';const radius=Number(u.searchParams.get('radius'));
+    const schools=geoSchools(registry);
+    if(!schools.some(s=>s.id===home))throw Error('Unknown home school');
+    json(res,200,nearbySchools(schools,home,radius));
+   }catch(e){json(res,400,{error:e.message});}return;
+  }
   if(req.method==='POST'&&path==='/api/website-check'){
    const origin=req.headers.origin;
    if(origin&&!['http://127.0.0.1:'+port,'http://localhost:'+port].includes(origin)){json(res,403,{error:'Invalid origin'});return;}

@@ -192,3 +192,17 @@ The customer UI is now one dashboard with optional school/audit setup. Search ra
 ## v0.11 website checks
 
 Opt-in HTTPS homepage metadata and robots.txt checks can be run locally. No AI requests are used. Requests are DNS-pinned and block private or unsupported address ranges; redirects are never followed. The result is a snapshot, not a search ranking, indexing verification, Lighthouse audit, or security certification. Search rankings remain unavailable pending a vetted provider.
+
+## v0.11.6 Maryland/DC regional competitor discovery pilot
+
+Uses the existing historical AIMS-derived Maryland/DC regional school list, *not* Google Places, NCES, or Wikidata. This is not a verified current AIMS membership roster.
+
+The dashboard provides a home-school selector, straight-line 10/15/25/50-mile radius, nearby list, manual selection of peers, and local browser storage for the selection. If the home school has no sourced coordinates, all regional schools remain available for manual selection. Chosen peers do not yet modify the independent AI audit pipeline.
+
+**Coordinates must be sourced, never invented.** The original registry doesn't include complete street addresses, so first create a CSV with columns `school_id,address,city,state,zip,address_source_url`. Obtain `school_id` from `/api/geo-schools`; provide a publicly sourced institutional street address and an HTTPS citation URL. Then run:
+
+```bash
+python3 scripts/import-mdc-locations.py ~/Downloads/mdc-school-addresses.csv --geocode
+```
+
+The script calls the public US Census Geocoder (no API key, subject to service availability and usage policy), rejects ambiguous matches, stores source URLs and method in local `~/.schoolvis/schools.sqlite`, and labels all results `geocoded_unverified`. Alternatively, CSV columns `lat,lon,geocode_source` can be supplied without `--geocode` where externally validated coordinates are available. Nothing overwrites previously saved audit results. Coordinate coverage is clearly indicated in the UI. This is an honest partial-coverage pilot until address enrichment is completed.

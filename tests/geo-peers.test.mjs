@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {milesBetween,nearbySchools} from '../lib/geo-peers.mjs';
+test('zero distance and missing coordinates',()=>{assert.equal(milesBetween({lat:39,lon:-76},{lat:39,lon:-76}),0);assert.equal(milesBetween({lat:39,lon:-76},{lat:null,lon:null}),null)});
+test('radius excludes home and unknown locations',()=>{const a=[{id:'a',name:'A',lat:39.28,lon:-76.65},{id:'b',name:'B',lat:39.30,lon:-76.65},{id:'c',name:'C',lat:null,lon:null},{id:'d',name:'D',lat:40.30,lon:-76.65}];const x=nearbySchools(a,'a',10);assert.deepEqual(x.nearby.map(y=>y.id),['b']);assert.equal(x.withoutCoordinates,1);assert.equal(nearbySchools(a,'c',10).missingHomeLocation,true);assert.throws(()=>nearbySchools(a,'a',12))});
