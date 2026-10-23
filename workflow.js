@@ -24,5 +24,15 @@
      queueMicrotask(()=>{location.hash='#audit';});
    }
  });
+ document.addEventListener('change',event=>{
+   const target=event.target;
+   if(target.matches('.workflow-stage select'))target.dataset.changed=target.selectedIndex>0?'true':'false';
+ });
+ document.addEventListener('click',event=>{
+   const b=event.target.closest('button');
+   if(!b||!b.closest('.workflow-stage')||b.disabled)return;
+   if(b.id==='landscape-reset')document.querySelectorAll('.landscape-filters select').forEach(s=>{s.dataset.changed='false';});
+   if(b.matches('[aria-pressed]'))b.classList.toggle('is-selected',b.getAttribute('aria-pressed')==='true');
+ });
  showStep();
 })();

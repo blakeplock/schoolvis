@@ -336,22 +336,24 @@ function useAudit(dataset, discovery = null) {
 async function runLiveAudit() {
   const lines=el('audit-schools').value.split('\n').map(s=>s.trim()).filter(Boolean);
   const schools=lines.map(line=>{const parts=line.split('|');if(parts.length!==2)throw new Error('Use School name | https://website on each line');return {name:parts[0].trim(),website:parts[1].trim()};});
-  const btn=el('run-audit');btn.disabled=true;el('audit-message').textContent='Running five provider requests sequentially. Please wait…';
+  const btn=el('run-audit');btn.disabled=true;btn.classList.add('is-busy');btn.setAttribute('aria-busy','true');el('audit-message').textContent='Running five provider requests sequentially. Please wait…';
   try {
     const r=await fetch('/api/audits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:el('audit-location').value,schools})});
     const j=await r.json();if(!r.ok)throw new Error(j.error||'Request failed');
     useAudit(j.dataset,j.discovery);el('audit-message').textContent=`Audit saved locally: ${j.id}. Five responses captured with API provenance.`;
-  }catch(e){el('audit-message').textContent='Audit failed: '+e.message;}finally{btn.disabled=false;}
+  }catch(e){el('audit-message').textContent='Audit failed: '+e.message;}finally{btn.disabled=false;btn.classList.remove('is-busy');btn.removeAttribute('aria-busy');}
 }
 async function loadLastAudit(){
+  const btn=el('load-audit');btn.disabled=true;btn.classList.add('is-busy');btn.setAttribute('aria-busy','true');
   try{const list=await(await fetch('/api/audits')).json();if(!list.audits?.length)throw new Error('No saved audits yet');
   const result=await(await fetch('/api/audits/'+encodeURIComponent(list.audits[0]))).json();useAudit(result.dataset,result.discovery);
-  el('audit-message').textContent=`Loaded local archive: ${list.audits[0]}`;}catch(e){el('audit-message').textContent=e.message;}
+  el('audit-message').textContent=`Loaded local archive: ${list.audits[0]}`;}catch(e){el('audit-message').textContent=e.message;}finally{btn.disabled=false;btn.classList.remove('is-busy');btn.removeAttribute('aria-busy');}
 }
 // Local registry records are candidates only, never verified school facts.
 let registryResults = [];
 async function loadRegistry() {
  try {
+  el('registry-status').innerHTML='<span class="workflow-loading" role="status">Searching schools…</span>';
   const query=el('registry-search').value.trim();const highSchool=el('registry-grades').value==='high';
   const res=await fetch('/api/schools?'+new URLSearchParams({q:query,highSchool:String(highSchool)}));
   if(!res.ok)throw new Error('Registry unavailable');const data=await res.json();registryResults=data.schools;
