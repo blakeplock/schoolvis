@@ -184,3 +184,7 @@ Step 1 provides locally ranked school-name suggestions populated from the regist
 ### v0.9.5 workflow placement
 
 Step 3 (Configure an audit) contains the discovered-school enrollment, affiliation, and location filters. Step 4 (Explore intelligence) contains the discovered competitive landscape, graph, relationship inspector, and evidence. Control IDs and data-processing behavior are unchanged. The selected-school transfer action navigates back to Step 3.
+
+## v0.10 — Discoverability dashboard reset
+
+The customer UI is now one dashboard with optional school/audit setup. Search ranking and website-health categories explicitly report “Not measured” until suitable collectors are implemented. Existing AI audit and local registry behavior is retained. Earlier graph and academic-analysis controls are retained in the code for archive compatibility, but are not exposed as marketing features.
