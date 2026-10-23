@@ -306,3 +306,17 @@ body{background:var(--sv-background);color:var(--sv-text)}
 #audit .live-panel .button.primary,#audit .tool-panel .button.primary{background:#17191d;color:#fff;border-color:#17191d}
 @media(max-width:1050px){.workflow-progress{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.workflow-progress{grid-template-columns:1fr 1fr}.workflow-progress-item{padding:10px 7px;font-size:11px;gap:6px}.workflow-stage-head h2{font-size:21px}}
+
+/* v0.9.4 - focused school picker and competitor search */
+.school-picker{max-width:920px}.school-picker label{display:block;color:#313840;font-size:14px;margin:0 0 10px}
+.school-picker input{width:100%;padding:12px 14px;background:#fff;color:#16191d;border:1px solid #adb7c3;border-radius:6px;font:inherit;font-size:16px}
+.school-picker-results{display:grid;gap:3px;margin-top:6px;max-height:350px;overflow-y:auto}
+.school-suggestion{display:flex;flex-direction:column;text-align:left;gap:3px;width:100%;padding:10px 13px;border:1px solid transparent;border-radius:6px;background:#fff;color:#1b2634;font:500 14px system-ui,sans-serif;cursor:pointer}
+.school-suggestion small{font-size:12px;font-weight:400;color:#616b77}
+.school-suggestion:hover,.school-suggestion:focus-visible,.school-suggestion.is-active{background:#e9f2ff;border-color:#70a7ef;outline:none}
+.school-picker-hint{font-size:12px;color:#596572;margin:10px 0}
+.school-picker-chosen{display:flex;flex-direction:column;align-items:flex-start;gap:9px;background:#edf6ff;border:1px solid #b5d4fa;border-radius:7px;padding:14px;color:#152339}
+.school-picker-chosen[hidden]{display:none}.school-picker-chosen strong{font-weight:600}.school-picker-chosen span{font-size:12px;color:#3d5268}
+.school-picker-chosen .button.primary{background:#171b21;color:#fff;border-color:#171b21}
+.competitor-search{display:grid;gap:13px}.competitor-search>.tool-panel{background:#f5f5f3;border-color:#d9dadd;color:#17191e}.competitor-search .tool-panel-label,.competitor-search .registry-controls label{color:#414b58}.competitor-search input,.competitor-search select{background:#fff;color:#151b23;border:1px solid #b8c2ce}
+.competitor-search .registry-list{max-height:420px}.competitor-search .panel{margin:0}
