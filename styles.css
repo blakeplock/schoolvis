@@ -274,3 +274,35 @@ body{background:var(--sv-background);color:var(--sv-text)}
 .graph-evidence summary{font-size:12px;cursor:pointer}.graph-evidence p{font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
 .graph-node{cursor:pointer}.graph-relation summary{cursor:pointer}
 @media(max-width:940px){.graph-workspace,.graph-workspace.inspector-collapsed{grid-template-columns:1fr}}
+
+/* v0.9.3 — guided four-step information architecture */
+.workflow-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 24px}
+.workflow-progress-item{display:flex;align-items:center;gap:10px;min-width:0;padding:14px 12px;border:1px solid #30363e;border-radius:7px;color:#a8b1bd;text-decoration:none;background:#11151b;font-size:12px;font-weight:520}
+.workflow-progress-item:hover{border-color:#667d98;color:#fff}.workflow-progress-item.active{color:#eff5fd;background:#172536;border-color:#4b9cf3}
+.workflow-step-number{display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border-radius:50%;background:#252b33;color:#cdd5df;font-size:11px;font-variant-numeric:tabular-nums}
+.workflow-progress-item.active .workflow-step-number{background:#4b9cf3;color:#08111b}
+.workflow-stage[hidden]{display:none!important}
+.workflow-stage-head{display:flex;align-items:start;justify-content:space-between;gap:14px;margin-bottom:20px}
+.workflow-stage-head h2{font-size:24px;letter-spacing:-.035em;font-weight:600;margin:5px 0 6px;color:#f1f3f6}
+.workflow-stage-head p{color:#abb5c0;font-size:13px;margin:0;line-height:1.6}
+.workflow-kicker{color:#83b8fc;font-size:11px;letter-spacing:.08em;font-weight:600}
+.workflow-content{display:grid;gap:16px;min-width:0}
+.workflow-content>.panel,.workflow-content>.filters,.workflow-content>.dashboard-followup,.workflow-content>.metrics{margin:0}
+.workflow-content>.tool-panel{padding:20px;border:1px solid #30353e;border-radius:8px}
+.workflow-stage-footer{display:flex;justify-content:space-between;gap:14px;padding:24px 0 10px}
+.workflow-next{margin-left:auto}
+.workflow-content #registry .registry-list{max-height:650px}
+.workflow-content #discovery .graph-layout{min-height:480px}
+/* Paper workspace for school selection, discovery filters and audit setup; evidence stays charcoal. */
+#choose-school>.workflow-content>.tool-panel,#discover>.workflow-content>.tool-panel,#audit>.workflow-content>.tool-panel,
+#audit>.workflow-content>.live-panel{background:#f5f5f3;color:#17191e;border-color:#d9dadd}
+#choose-school .tool-panel-label,#discover .tool-panel-label,#audit .tool-panel-label{color:#515a65}
+#choose-school .registry-controls label,#discover .landscape-filters label,#audit .live-panel label{color:#3a424d}
+#choose-school .registry-controls input,#choose-school .registry-controls select,#discover .landscape-filters select,#audit .live-panel input,#audit .live-panel textarea{background:#fff;color:#181b20;border-color:#c7ccd3}
+#audit .live-panel h2,#audit .live-panel .eyebrow{color:#202631}
+#audit .live-panel .section-intro,#audit .live-panel .footnote,#audit .live-panel #audit-message{color:#555e68}
+#audit .live-panel .tag{background:#e8eaec;color:#3c4654;border-color:#c9cdd1}
+#audit .live-panel .button.outline,#audit .tool-panel .button.outline,#discover .tool-panel .button.outline{background:#fff;color:#23272f;border-color:#b7bec7}
+#audit .live-panel .button.primary,#audit .tool-panel .button.primary{background:#17191d;color:#fff;border-color:#17191d}
+@media(max-width:1050px){.workflow-progress{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.workflow-progress{grid-template-columns:1fr 1fr}.workflow-progress-item{padding:10px 7px;font-size:11px;gap:6px}.workflow-stage-head h2{font-size:21px}}

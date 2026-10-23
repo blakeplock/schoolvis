@@ -173,3 +173,7 @@ The node network supports draggable labeled nodes, pan and zoom, an integrated e
 ## v0.9.2 graph exploration
 
 The Competition Graph has 1- and 2-layer breadth-first neighborhoods from the focused school, an inspector that can collapse, and separate **focus** versus **Add to comparison** interactions. Recorded edges remain co-appearances, not verified competitive claims. Relationship question evidence is expandable; older archives may not contain a detailed excerpt for every discovered-school candidate.
+
+## Four-step navigation (v0.9.3)
+
+The UI separates the existing registry search, observed competitor graph, audit configuration, and intelligence reports into four navigable steps. All element IDs, audit request handling, graph controls, and saved local records remain unchanged. Moving through steps does not persist a separate named comparison group; the graph's existing transfer-to-audit behavior is retained.
