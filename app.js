@@ -175,7 +175,7 @@ async function addGraphSchools(schools){
    }catch{rows.push(`${school.name} | https://REVIEW-OFFICIAL-WEBSITE`);}
  }
  el('audit-schools').value=rows.join('\n');el('graph-message').textContent='Audit selection updated. Verify every website (especially REVIEW placeholders) before running paid requests.';
- el('audit-schools').focus();
+ refreshAuditSelection();refreshRegistrySelectionButtons();el('audit-schools').focus();
 }
 function renderDiscovery() {
   const analysis = state.discovery;
@@ -231,7 +231,7 @@ function renderDiscovery() {
     track.append(fill); metric.append(track);row.append(details,metric);list.append(row);
   }
   replace('discovery-list', [text('p', `${schools.length} candidate school names · ${total} recorded responses. These are answer-link appearances, not independently verified recommendations.`, 'landscape-summary'), filtered.length ? list : text('p', 'No schools found in this location with the selected filters. Try another location or Reset.', 'empty')]);
-  const claims = captures.flatMap(c => (c.claims || []).map(x => ({questionId:c.questionId, excerpt:String(x.excerpt || '')})));
+  const claims = captures.flatMap(c => (c.claims || []).map(x => ({questionId:c.questionId, excerpt:String(x.excerpt || ''), schoolName: x.schoolName || null}))); 
   const quality = captures.reduce((v,c) => { v.maps += c.citationSummary?.mapSearchLinks || 0; v.total += c.citationSummary?.total || 0;return v; }, {maps:0,total:0});
   const evidence = document.createElement('div'); evidence.className = 'landscape-evidence';
   const head = document.createElement('div'); head.className = 'landscape-evidence-head';
@@ -246,13 +246,13 @@ function renderDiscovery() {
       const key = claim.questionId + ':' + claim.excerpt.toLowerCase().replace(/[^a-z0-9]+/g,' ');
       if (seen.has(key)) continue;seen.add(key);
       const li = document.createElement('li');
-      li.append(text('span',claim.questionId,'landscape-question'),text('span',claim.excerpt),text('span','Unverified','landscape-flag'));
+      li.append(text('span',claim.questionId,'landscape-question'),text('strong',claim.schoolName ? `${claim.schoolName} · Section context` : 'School unclear','landscape-claim-school'),text('span',claim.excerpt),text('span','Unverified','landscape-flag'));
       items.append(li);
       if (items.children.length >= 8) break;
     }
     evidence.append(items);
   } else evidence.append(text('p','No numerical claims flagged in this sample.','landscape-evidence-note'));
-  evidence.append(text('p','Automated extraction may duplicate, truncate, or misattribute claims. Review original responses before using any claims in a report.','landscape-disclaimer'));
+  evidence.append(text('p','School labels identify the preceding named section in the response, not independently verified attribution. Older archives may show School unclear. Automated extraction can duplicate or truncate claims; check the full response.','landscape-disclaimer'));
   replace('claim-list',[evidence]);drawCompetitionGraph();
 }
 
@@ -349,6 +349,39 @@ async function loadLastAudit(){
   const result=await(await fetch('/api/audits/'+encodeURIComponent(list.audits[0]))).json();useAudit(result.dataset,result.discovery);
   el('audit-message').textContent=`Loaded local archive: ${list.audits[0]}`;}catch(e){el('audit-message').textContent=e.message;}finally{btn.disabled=false;btn.classList.remove('is-busy');btn.removeAttribute('aria-busy');}
 }
+// The selected audit schools are the source of truth, including manual edits and graph transfers.
+function auditSchoolEntries() {
+ return el('audit-schools').value.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{
+  const [name, ...url]=line.split('|'); return {name:name.trim(),website:url.join('|').trim()};
+ }).filter(s=>s.name);
+}
+function refreshAuditSelection() {
+ const entries=auditSchoolEntries();
+ const box=el('audit-selected-schools');
+ box.replaceChildren();
+ box.append(text('strong',`Schools added to audit · ${entries.length}/5`));
+ if(!entries.length){box.append(text('p','No schools added yet. Select schools from the registry or graph.','audit-selection-empty'));return;}
+ const list=text('div','','audit-selection-chips');
+ for(const item of entries){
+  const chip=text('span','','audit-selection-chip');
+  chip.append(text('span',item.name));
+  const remove=text('button','×','audit-selection-remove');remove.type='button';remove.setAttribute('aria-label',`Remove ${item.name} from audit`);
+  remove.addEventListener('click',()=>{
+   const current=auditSchoolEntries().filter(s=>s.name.toLowerCase()!==item.name.toLowerCase());
+   el('audit-schools').value=current.map(s=>`${s.name} | ${s.website}`).join('\n');
+   refreshAuditSelection(); refreshRegistrySelectionButtons();
+  });chip.append(remove);list.append(chip);
+ }
+ box.append(list);
+}
+function refreshRegistrySelectionButtons(){
+ const selected=new Set(auditSchoolEntries().map(x=>x.name.toLowerCase()));
+ for(const button of el('registry-list').querySelectorAll('[data-audit-school]')){
+  const added=selected.has(button.dataset.auditSchool.toLowerCase());
+  button.textContent=added?'✓ Added to audit':'Add to audit';button.classList.toggle('is-added',added);
+  button.setAttribute('aria-pressed',String(added));
+ }
+}
 // Local registry records are candidates only, never verified school facts.
 let registryResults = [];
 async function loadRegistry() {
@@ -370,7 +403,7 @@ async function loadRegistry() {
     try{const response=await fetch('/api/schools/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({schoolId:s.id,officialWebsite:officialWebsite.trim(),gradeStatus:gradeStatus.trim(),gradesEvidenceUrl:gradesEvidenceUrl.trim()})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Review failed');await loadRegistry();}
     catch(e){el('registry-status').textContent='Review not saved: '+e.message;}
    });
-   const b=text('button','Add to audit','button outline');b.type='button';b.addEventListener('click',()=>{
+   const b=text('button','Add to audit','button outline');b.type='button';b.dataset.auditSchool=s.name;b.addEventListener('click',()=>{
     const website=s.review?.officialWebsite||s.publishedWebsite?.website||'';
     if(!website){el('registry-status').textContent=`No website is recorded for ${s.name}. Review its official website first, then add it to the audit.`;return;}
     const field=el('audit-schools');const existing=field.value.trim();const lines=existing?existing.split('\n'):[];
@@ -381,10 +414,10 @@ async function loadRegistry() {
       if(lines.length>=5){el('registry-status').textContent='Audit limit: 5 schools. Remove one first.';return;}
       field.value=[...lines,entry].join('\n');el('registry-status').textContent=`Added ${s.name} with ${website}. Confirm the website before running.`;
     }
-    field.focus();
+    refreshAuditSelection();refreshRegistrySelectionButtons();
    });const actions=text('div','','registry-actions');actions.append(reviewButton,b);div.append(info,actions);return div;
   });
-  replace('registry-list',rows.length?rows:[text('p','No matching records.','empty')]);
+  replace('registry-list',rows.length?rows:[text('p','No matching records.','empty')]);refreshRegistrySelectionButtons();
   if(data.schools.length>90)el('registry-status').textContent+=` Showing the first 90 of ${data.total}; narrow your search to see others.`;
  }catch(e){el('registry-status').textContent='Registry requires the running local Node server: '+e.message;}
 }
@@ -396,6 +429,8 @@ async function matchDiscovered() {
  }catch { /* offline imported observations have no lookup service */ }
 }
 function init() {
+  el('audit-schools').addEventListener('input',()=>{refreshAuditSelection();refreshRegistrySelectionButtons();});
+  refreshAuditSelection();
   for (const id of ['landscape-gender','landscape-religion','landscape-location']) el(id).addEventListener('change',renderDiscovery);
   el('landscape-reset').addEventListener('click',()=>{for(const id of ['landscape-gender','landscape-religion','landscape-location'])el(id).value='all';renderDiscovery();});
   validateDataset(state.data); setupOptions(); render(); void auditStatus(); void loadRegistry();

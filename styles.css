@@ -332,3 +332,13 @@ body{background:var(--sv-background);color:var(--sv-text)}
 .workflow-loading::before{content:"";width:13px;height:13px;border:2px solid #4b9cf3;border-right-color:transparent;border-radius:50%;animation:sv-spin .75s linear infinite}
 @keyframes sv-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.workflow-stage button.is-busy::before,.workflow-loading::before{animation:none}}
+
+/* v0.9.7 school-selection feedback and claim provenance */
+.audit-selected-schools{border:1px solid #c8d1dd;background:#fff;color:#171b23;border-radius:8px;padding:13px 15px;margin:12px 0 17px;font-size:13px}
+.audit-selection-empty{color:#5e6c7c;margin:7px 0 0;font-size:12px}
+.audit-selection-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.audit-selection-chip{display:inline-flex;align-items:center;gap:8px;background:#e7f1ff;border:1px solid #a6c8f7;color:#143763;border-radius:6px;padding:5px 8px}
+.audit-selection-remove{background:transparent!important;color:#143763!important;border:0!important;box-shadow:none!important;font-weight:600!important;padding:0 3px!important;cursor:pointer}
+.registry-actions .is-added{background:#176247!important;color:#fff!important;border-color:#176247!important;box-shadow:0 0 0 1px #a5ead1!important}
+.landscape-claim-school{font-size:12px;font-weight:600;color:#d2e5ff;min-width:150px}
+.landscape-claims li{flex-wrap:wrap;gap:10px}
