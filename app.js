@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { buildCompetitionGraph } from './lib/competition-graph.mjs';
+import { buildCompetitionGraph, neighborhood } from './lib/competition-graph.mjs';
 import { DEMO } from './data/demo.mjs';
 import { validateDataset, summarize } from './lib/analysis.mjs';
 import { createWorksheet } from './lib/worksheet.mjs';
@@ -83,18 +83,26 @@ function renderObservations(report) {
 }
 let graphSelection = new Set();
 let graphFocus = null;
+let graphDepth = 1;
+let graphInspectorCollapsed = false;
 const graphPositions = new Map();
 let graphView = {x:0,y:0,scale:1};
 function drawCompetitionGraph() {
   const panel=el('competition-graph'); if(!panel)return;
   const graph=buildCompetitionGraph(state.data,state.discovery,state.platform);
   const visible=filterSchools(graph.nodes,{gender:el('landscape-gender').value,religion:el('landscape-religion').value,location:el('landscape-location').value});
-  const allowed=new Set(visible.map(n=>n.id)); const edges=graph.edges.filter(e=>allowed.has(e.source)&&allowed.has(e.target));
+  const allowed=new Set(visible.map(n=>n.id));
+  const filteredGraph={nodes:visible,edges:graph.edges.filter(e=>allowed.has(e.source)&&allowed.has(e.target))};
+  if (!allowed.has(graphFocus)) graphFocus=visible[0]?.id||null;
+  const nearby=graphFocus ? neighborhood(filteredGraph,graphFocus,graphDepth) : {nodes:[],edges:[]};
   panel.replaceChildren();
-  panel.append(text('p',`${visible.length} schools · ${edges.length} observed co-appearance links · ${graph.responses} captured responses`, 'graph-caption'));
+  const heading=document.createElement('div');heading.className='graph-depth-controls';
+  heading.append(text('p',`${nearby.nodes.length} of ${visible.length} schools · ${nearby.edges.length} links within ${graphDepth} layer(s) · ${graph.responses} captured responses`,'graph-caption'));
+  for(const depth of [1,2]) {const b=document.createElement('button');b.type='button';b.className='graph-control'+(depth===graphDepth?' is-active':'');b.textContent=`${depth} layer${depth>1?'s':''}`;b.setAttribute('aria-pressed',String(depth===graphDepth));b.addEventListener('click',()=>{graphDepth=depth;graphView={x:0,y:0,scale:1};drawCompetitionGraph();});heading.append(b);}
+  panel.append(heading);
   if(!visible.length){panel.append(text('p','No schools match these filters.','empty'));return;}
-  const nodes=visible.slice(0,48), ids=new Set(nodes.map(n=>n.id));
-  const renderedEdges=edges.filter(e=>ids.has(e.source)&&ids.has(e.target));
+  const nodes=nearby.nodes.slice(0,48), ids=new Set(nodes.map(n=>n.id));
+  const renderedEdges=nearby.edges.filter(e=>ids.has(e.source)&&ids.has(e.target));
   const width=900,height=570,ns='http://www.w3.org/2000/svg';
   const shape=(tag,attrs={})=>{const node=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))node.setAttribute(k,String(v));return node;};
   // A deterministic force layout, computed only from recorded edges. No external library.
@@ -124,13 +132,14 @@ function drawCompetitionGraph() {
   const lines=new Map();
   function syncEdges(){for(const e of renderedEdges){const a=positions.get(e.source),b=positions.get(e.target),line=lines.get(e);if(line){line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);}}}
   for(const e of renderedEdges){const a=positions.get(e.source),b=positions.get(e.target);const line=shape('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#536778','stroke-opacity':Math.min(.85,.22+e.count*.07),'stroke-width':Math.min(5,1+Math.sqrt(e.count))});lines.set(e,line);camera.append(line);}
-  const toggle=(id)=>{if(graphSelection.has(id))graphSelection.delete(id);else if(graphSelection.size<5)graphSelection.add(id);else{el('graph-message').textContent='Select no more than five schools.';return;}graphFocus=id;drawCompetitionGraph();};
+  const toggle=(id)=>{if(graphSelection.has(id))graphSelection.delete(id);else if(graphSelection.size<5)graphSelection.add(id);else{el('graph-message').textContent='Select no more than five schools.';return;}drawCompetitionGraph();};
+  const focusNode=id=>{graphFocus=id;graphView={x:0,y:0,scale:1};drawCompetitionGraph();};
   const groups=new Map();
-  for(const n of nodes){const pos=positions.get(n.id),chosen=graphSelection.has(n.id);const group=shape('g',{transform:`translate(${pos.x} ${pos.y})`,tabindex:'0',role:'button','aria-label':`${n.name}, ${n.appearances} appearances. Press Enter to select.`, 'aria-pressed':String(chosen)});group.classList.add('graph-node');
+  for(const n of nodes){const pos=positions.get(n.id),chosen=graphSelection.has(n.id);const group=shape('g',{transform:`translate(${pos.x} ${pos.y})`,tabindex:'0',role:'button','aria-label':`${n.name}, ${n.appearances} appearances. Press Enter to explore.`, 'aria-pressed':String(chosen)});group.classList.add('graph-node');
     const radius=Math.max(14,Math.min(25,12+Math.sqrt(n.appearances)*2));const circle=shape('circle',{r:radius,fill:chosen?'#2563eb':n.trackedId?'#9eafc0':'#526477',stroke:graphFocus===n.id?'#93c5fd':'#b2bdc9','stroke-width':graphFocus===n.id?3:1.2});group.append(circle);
     const label=shape('text',{x:0,y:radius+17,'text-anchor':'middle','font-size':'12',fill:'#eaf0f6','font-weight':chosen?650:500});label.textContent=n.name;group.append(label);
     const tip=shape('title');tip.textContent=`${n.name} · ${n.appearances} responses`;group.append(tip);
-    group.addEventListener('click',()=>{if(!moved)toggle(n.id);moved=false;});group.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(n.id);}});
+    group.addEventListener('click',()=>{if(!moved)focusNode(n.id);moved=false;});group.addEventListener('dblclick',()=>focusNode(n.id));group.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();focusNode(n.id);}});
     group.addEventListener('pointerdown',event=>{if(event.button!==0)return;event.stopPropagation();drag={id:n.id,x:event.clientX,y:event.clientY,px:pos.x,py:pos.y};moved=false;group.setPointerCapture(event.pointerId);});
     group.addEventListener('pointermove',event=>{if(!drag||drag.id!==n.id)return;const rect=svg.getBoundingClientRect();const dx=(event.clientX-drag.x)*width/rect.width/graphView.scale,dy=(event.clientY-drag.y)*height/rect.height/graphView.scale;if(Math.hypot(dx,dy)>3)moved=true;pos.x=Math.max(65,Math.min(835,drag.px+dx));pos.y=Math.max(35,Math.min(525,drag.py+dy));graphPositions.set(n.id,{...pos});group.setAttribute('transform',`translate(${pos.x} ${pos.y})`);syncEdges();});
     group.addEventListener('pointerup',()=>{drag=null;});group.addEventListener('pointercancel',()=>{drag=null;moved=false;});camera.append(group);groups.set(n.id,group);
@@ -141,16 +150,20 @@ function drawCompetitionGraph() {
   svg.addEventListener('pointerup',()=>pan=null);svg.addEventListener('pointercancel',()=>pan=null);
   svg.addEventListener('wheel',event=>{event.preventDefault();graphView.scale=Math.min(3,Math.max(.5,graphView.scale*(event.deltaY>0?.9:1.1)));refreshCamera();},{passive:false});
   const inspector=document.createElement('aside');inspector.className='graph-inspector';
-  inspector.append(text('p','School inspector','graph-inspector-label'));
-  const focus=graph.nodes.find(n=>n.id===graphFocus)||nodes[0];if(focus){inspector.append(text('h3',focus.name));const related=edges.filter(e=>e.source===focus.id||e.target===focus.id).sort((a,b)=>b.count-a.count);inspector.append(text('p',`${focus.appearances} appearances · ${related.length} linked schools`, 'graph-caption'));
-    inspector.append(text('p','Observed co-appearances (not established competitive relationships)','graph-inspector-label'));
+  const inspectorHeader=document.createElement('div');inspectorHeader.className='graph-inspector-head';inspectorHeader.append(text('p','School inspector','graph-inspector-label'));
+  const collapse=zoomButton(graphInspectorCollapsed?'Show inspector':'Hide inspector',()=>{graphInspectorCollapsed=!graphInspectorCollapsed;drawCompetitionGraph();});inspectorHeader.append(collapse);inspector.append(inspectorHeader);
+  if(graphInspectorCollapsed)inspector.classList.add('is-collapsed');
+  const inspectorBody=document.createElement('div');inspectorBody.className='graph-inspector-body';
+  const focus=graph.nodes.find(n=>n.id===graphFocus)||nodes[0];if(focus){inspectorBody.append(text('h3',focus.name));const related=filteredGraph.edges.filter(e=>e.source===focus.id||e.target===focus.id).sort((a,b)=>b.count-a.count);inspectorBody.append(text('p',`${focus.appearances} appearances · ${related.length} linked schools`, 'graph-caption'));
+    inspectorBody.append(text('p','Observed co-appearances (not established competitive relationships)','graph-inspector-label'));
     const questionNames=new Map((state.data.questions||[]).map(q=>[q.id,q.prompt]));
-    for(const e of related.slice(0,8)){const peer=graph.nodes.find(n=>n.id===(e.source===focus.id?e.target:e.source));const item=document.createElement('details');item.className='graph-relation';const summary=document.createElement('summary');summary.textContent=`${peer?.name||'Unknown'} · ${e.count} shared responses`;item.append(summary);const ids=[...new Set(e.questions.map(q=>q.id))];const q=text('p',ids.map(id=>questionNames.get(id)||id).slice(0,8).join(' • '));item.append(q);inspector.append(item);}
+    for(const e of related.slice(0,8)){const peer=graph.nodes.find(n=>n.id===(e.source===focus.id?e.target:e.source));const item=document.createElement('details');item.className='graph-relation';const summary=document.createElement('summary');summary.textContent=`${peer?.name||'Unknown'} · ${e.count} shared responses`;item.append(summary);const ids=[...new Set(e.questions.map(q=>q.id))];for(const id of ids.slice(0,12)){const record=(state.data.observations||[]).find(o=>o.questionId===id);const detail=document.createElement('details');detail.className='graph-evidence';const label=document.createElement('summary');label.textContent=questionNames.get(id)||id;detail.append(label);if(record){detail.append(text('p',record.responseExcerpt||'No excerpt saved.'));detail.append(text('small',`Captured ${record.capturedAt||'unknown'} · ${record.platform||'unknown platform'}`));}else detail.append(text('p','See Evidence explorer for the complete captured observation.'));item.append(detail);}inspectorBody.append(item);}
   }
-  inspector.append(text('p',`Comparison group · ${graphSelection.size}/5`, 'graph-inspector-label'));
-  const chips=document.createElement('div');chips.className='graph-picked';for(const id of graphSelection){const n=graph.nodes.find(n=>n.id===id);if(!n)continue;const b=zoomButton(`${n.name} ×`,()=>toggle(id));chips.append(b);}inspector.append(chips);
-  const action=document.createElement('button');action.type='button';action.className='button primary';action.textContent='Use selected schools in audit';action.disabled=graphSelection.size<2;action.addEventListener('click',()=>{void addGraphSchools([...graphSelection].map(id=>graph.nodes.find(n=>n.id===id)).filter(Boolean));});inspector.append(action);
-  layout.append(visual,inspector);panel.append(layout);
+  const addFocus=zoomButton(graphSelection.has(focus?.id)?'Remove from comparison':'Add to comparison',()=>toggle(focus.id));if(focus)inspectorBody.append(addFocus);
+  inspectorBody.append(text('p',`Comparison group · ${graphSelection.size}/5`, 'graph-inspector-label'));
+  const chips=document.createElement('div');chips.className='graph-picked';for(const id of graphSelection){const n=graph.nodes.find(n=>n.id===id);if(!n)continue;const b=zoomButton(`${n.name} ×`,()=>toggle(id));chips.append(b);}inspectorBody.append(chips);
+  const action=document.createElement('button');action.type='button';action.className='button primary';action.textContent='Use selected schools in audit';action.disabled=graphSelection.size<2;action.addEventListener('click',()=>{void addGraphSchools([...graphSelection].map(id=>graph.nodes.find(n=>n.id===id)).filter(Boolean));});inspectorBody.append(action);inspector.append(inspectorBody);
+  if(graphInspectorCollapsed)layout.classList.add('inspector-collapsed');layout.append(visual,inspector);panel.append(layout);
   if(visible.length>48)panel.append(text('p','Showing the 48 most frequently observed schools; filters can narrow the display.','graph-caption'));
   if(graph.isSynthetic)panel.append(text('p','Fictional demo graph: relationships shown are invented sample observations.','graph-caption'));
 }

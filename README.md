@@ -169,3 +169,7 @@ Competition Discovery now includes a local SVG co-appearance network, constructe
 ## v0.9.1 Interactive Competition Graph
 
 The node network supports draggable labeled nodes, pan and zoom, an integrated evidence inspector, and selection of 2–5 schools for the audit. Relationships are derived from captured co-appearances, not independent evidence of competition. No external graph dependencies.
+
+## v0.9.2 graph exploration
+
+The Competition Graph has 1- and 2-layer breadth-first neighborhoods from the focused school, an inspector that can collapse, and separate **focus** versus **Add to comparison** interactions. Recorded edges remain co-appearances, not verified competitive claims. Relationship question evidence is expandable; older archives may not contain a detailed excerpt for every discovered-school candidate.
