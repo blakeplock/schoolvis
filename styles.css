@@ -320,3 +320,15 @@ body{background:var(--sv-background);color:var(--sv-text)}
 .school-picker-chosen .button.primary{background:#171b21;color:#fff;border-color:#171b21}
 .competitor-search{display:grid;gap:13px}.competitor-search>.tool-panel{background:#f5f5f3;border-color:#d9dadd;color:#17191e}.competitor-search .tool-panel-label,.competitor-search .registry-controls label{color:#414b58}.competitor-search input,.competitor-search select{background:#fff;color:#151b23;border:1px solid #b8c2ce}
 .competitor-search .registry-list{max-height:420px}.competitor-search .panel{margin:0}
+
+/* v0.9.6 — workflow clarity, interactive feedback */
+.workflow-stage .button, .workflow-progress-item, .school-picker-results button, .graph-controls button {transition:background-color .16s,border-color .16s,color .16s,box-shadow .16s}
+.workflow-progress-item.active,.workflow-progress-item[aria-current="step"]{border-color:#4b9cf3!important;background:rgba(75,156,243,.17)!important;color:#e9f2ff!important;box-shadow:inset 0 -3px #4b9cf3}
+.workflow-stage button[aria-pressed="true"],.workflow-stage button.is-selected,.workflow-stage .button.is-selected{background:#1d4f86!important;color:#fff!important;border-color:#64aaff!important;box-shadow:0 0 0 1px #64aaff55}
+.workflow-stage select[data-changed="true"],.workflow-stage input[data-changed="true"]{border-color:#4b9cf3!important;box-shadow:0 0 0 2px #4b9cf326}
+.workflow-stage button.is-busy{opacity:.9;cursor:progress;pointer-events:none;display:inline-flex;align-items:center;gap:9px}
+.workflow-stage button.is-busy::before{content:"";width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sv-spin .72s linear infinite;flex:none}
+.workflow-loading{display:inline-flex;align-items:center;gap:8px;color:#77b9ff;font-size:12px}
+.workflow-loading::before{content:"";width:13px;height:13px;border:2px solid #4b9cf3;border-right-color:transparent;border-radius:50%;animation:sv-spin .75s linear infinite}
+@keyframes sv-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.workflow-stage button.is-busy::before,.workflow-loading::before{animation:none}}
