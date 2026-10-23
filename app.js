@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import { buildCompetitionGraph } from './lib/competition-graph.mjs';
 import { DEMO } from './data/demo.mjs';
 import { validateDataset, summarize } from './lib/analysis.mjs';
 import { createWorksheet } from './lib/worksheet.mjs';
@@ -80,11 +81,55 @@ function renderObservations(report) {
   el('records-shown').textContent = `Showing ${subset.length} of ${rows.length} responses`;
   el('show-more').hidden = subset.length >= rows.length;
 }
+let graphSelection = new Set();
+let graphFocus = null;
+function drawCompetitionGraph() {
+  const panel=el('competition-graph'); if(!panel)return;
+  const graph=buildCompetitionGraph(state.data,state.discovery,state.platform);
+  const visible=filterSchools(graph.nodes,{gender:el('landscape-gender').value,religion:el('landscape-religion').value,location:el('landscape-location').value});
+  const allowed=new Set(visible.map(n=>n.id));const edges=graph.edges.filter(e=>allowed.has(e.source)&&allowed.has(e.target));
+  panel.replaceChildren();
+  panel.append(text('p',`${visible.length} schools · ${edges.length} observed co-appearance links · ${graph.responses} captured responses`, 'graph-caption'));
+  if(!visible.length){panel.append(text('p','No schools match these filters.','empty'));return;}
+  const width=800,height=400,cx=400,cy=195;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox',`0 0 ${width} ${height}`);svg.setAttribute('role','img');svg.setAttribute('aria-label','School co-appearance network; select schools using the buttons below');svg.classList.add('competition-svg');
+  const positions=new Map();const nodes=visible.slice(0,36);
+  nodes.forEach((n,i)=>{const angle=2*Math.PI*i/nodes.length-Math.PI/2;const radial=nodes.length<7?140: i%2===0?147:182;positions.set(n.id,{x:cx+radial*Math.cos(angle)*1.72,y:cy+radial*Math.sin(angle)});});
+  const ns='http://www.w3.org/2000/svg';
+  const shape=(tag,attrs)=>{const node=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))node.setAttribute(k,String(v));return node;};
+  for(const e of edges){const a=positions.get(e.source),b=positions.get(e.target);if(!a||!b)continue;const line=shape('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#56687b','stroke-opacity':Math.min(.85,.2+e.count*.12),'stroke-width':Math.min(5,1+e.count)});svg.append(line);}
+  for(const n of nodes){const pos=positions.get(n.id);const chosen=graphSelection.has(n.id);const circle=shape('circle',{cx:pos.x,cy:pos.y,r:chosen?12:Math.min(14,6+n.appearances*.9),fill:chosen?'#60a5fa':n.trackedId?'#d0dae5':'#8192a4',stroke:chosen?'#bfdcff':'#18232f','stroke-width':2});circle.setAttribute('tabindex','0');circle.setAttribute('role','button');circle.setAttribute('aria-label',`Select ${n.name}`);circle.style.cursor='pointer';const selectNode=()=>{if(graphSelection.has(n.id))graphSelection.delete(n.id);else if(graphSelection.size<5)graphSelection.add(n.id);else{el('graph-message').textContent='Select no more than five schools.';return;}graphFocus=n.id;drawCompetitionGraph();};circle.addEventListener('click',selectNode);circle.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectNode();}});svg.append(circle);const title=shape('title',{});title.textContent=`${n.name}, ${n.appearances} appearances`;circle.append(title);}
+  panel.append(svg);
+  if(visible.length>36)panel.append(text('p','Showing the top 36 nodes by appearances. All matching schools remain selectable below.','graph-caption'));
+  const selected=text('div','','graph-selection');
+  selected.append(text('p','Select schools for the next audit · maximum 5, including your own school','graph-caption'));
+  const list=text('div','','graph-node-list');
+  for(const n of visible){const button=document.createElement('button');button.type='button';button.className='graph-node-button'+(graphSelection.has(n.id)?' selected':'');button.setAttribute('aria-pressed',String(graphSelection.has(n.id)));button.textContent=`${graphSelection.has(n.id)?'✓ ':'+ '}${n.name} · ${n.appearances}`;
+    button.addEventListener('click',()=>{if(graphSelection.has(n.id))graphSelection.delete(n.id);else if(graphSelection.size<5)graphSelection.add(n.id);else {el('graph-message').textContent='Select no more than five schools.';return;}graphFocus=n.id;drawCompetitionGraph();});list.append(button);
+  }
+  selected.append(list);panel.append(selected);
+  const details=text('div','','graph-detail');const focus=graph.nodes.find(n=>n.id===graphFocus)||nodes[0];if(focus){details.append(text('strong',focus.name));const related=edges.filter(e=>e.source===focus.id||e.target===focus.id).sort((a,b)=>b.count-a.count);details.append(text('p',`${focus.appearances} response appearances. ${related.length} linked schools. An edge indicates co-appearance, not a proven competitive relationship.`));for(const e of related.slice(0,5)){const peer=graph.nodes.find(n=>n.id===(e.source===focus.id?e.target:e.source));details.append(text('p',`${peer?.name||'Unknown'} · ${e.count} shared response(s) · ${[...new Set(e.questions.map(q=>q.id))].join(', ')}`));}}
+  panel.append(details);
+  const action=document.createElement('button');action.type='button';action.className='button primary';action.textContent='Use selected schools in audit';action.disabled=graphSelection.size<2;
+  action.addEventListener('click',()=>{void addGraphSchools([...graphSelection].map(id=>graph.nodes.find(n=>n.id===id)).filter(Boolean));});panel.append(action);
+  if(graph.isSynthetic)panel.append(text('p','Fictional demo graph. No actual school relationships measured.','graph-caption'));
+}
+async function addGraphSchools(schools){
+ const rows=[];for(const school of schools){
+   try{const r=await fetch('/api/schools?q='+encodeURIComponent(school.name));if(!r.ok)throw Error('Registry unavailable');const data=await r.json();
+   const match=data.schools.find(s=>s.name.toLowerCase().replace(/^the /,'')===school.name.toLowerCase().replace(/^the /,''));const website=match?.review?.officialWebsite||match?.publishedWebsite?.website||null;
+   if(website)rows.push(`${school.name} | ${website}`);else rows.push(`${school.name} | https://REVIEW-OFFICIAL-WEBSITE`);
+   }catch{rows.push(`${school.name} | https://REVIEW-OFFICIAL-WEBSITE`);}
+ }
+ el('audit-schools').value=rows.join('\n');el('graph-message').textContent='Audit selection updated. Verify every website (especially REVIEW placeholders) before running paid requests.';
+ el('audit-schools').focus();
+}
 function renderDiscovery() {
   const analysis = state.discovery;
   if (!analysis) {
     replace('discovery-list', [text('p', 'Run or load a live audit to explore the schools appearing in recorded answers.', 'empty')]);
-    replace('claim-list', []);
+    replace('claim-list', []);drawCompetitionGraph();
     return;
   }
   const captures = analysis.captures || [];
@@ -156,7 +201,7 @@ function renderDiscovery() {
     evidence.append(items);
   } else evidence.append(text('p','No numerical claims flagged in this sample.','landscape-evidence-note'));
   evidence.append(text('p','Automated extraction may duplicate, truncate, or misattribute claims. Review original responses before using any claims in a report.','landscape-disclaimer'));
-  replace('claim-list',[evidence]);
+  replace('claim-list',[evidence]);drawCompetitionGraph();
 }
 
 function renderTopicChart(report) {
