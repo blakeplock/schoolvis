@@ -262,3 +262,15 @@ body{background:var(--sv-background);color:var(--sv-text)}
 
 /* v0.9.1 interactive competition network */
 .graph-workspace{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(245px,1fr);gap:12px;margin:12px 0}.graph-visual{position:relative;min-width:0}.graph-controls{position:absolute;z-index:2;top:12px;right:12px;display:flex;gap:5px}.graph-control{background:#202b38;color:#ebf3fc;border:1px solid #536478;border-radius:5px;padding:7px 9px;font-size:12px;cursor:pointer}.graph-control:focus-visible,.graph-node:focus-visible{outline:2px solid #80b8ff;outline-offset:2px}.competition-svg{height:480px;max-height:none;touch-action:none;user-select:none;cursor:grab}.graph-node{cursor:grab;outline:none}.graph-node:active{cursor:grabbing}.graph-node text{pointer-events:none;paint-order:stroke;stroke:#0c121a;stroke-width:3px;stroke-linejoin:round}.graph-inspector{background:#151f2b;border:1px solid #344457;border-radius:8px;padding:15px;min-width:0;display:flex;flex-direction:column;gap:8px}.graph-inspector h3{font-size:16px;color:#f5f7fa;margin:2px 0;font-weight:580}.graph-inspector-label{font-size:11px;color:#a8bbce;margin:8px 0 1px}.graph-relation{border-top:1px solid #344457;padding:9px 0;color:#d8e4ef;font-size:12px}.graph-relation summary{cursor:pointer}.graph-relation p{color:#a8bacd;font-size:11px;line-height:1.6}.graph-picked{display:flex;gap:5px;flex-wrap:wrap}.graph-inspector .button{margin-top:10px;white-space:normal}.graph-inspector .button:disabled{opacity:.45;cursor:not-allowed}@media(max-width:1100px){.graph-workspace{grid-template-columns:minmax(0,1fr)}.competition-svg{height:400px}}
+
+/* v0.9.2 graph exploration */
+.graph-workspace{grid-template-columns:minmax(0,7fr) minmax(230px,3fr)}
+.graph-workspace.inspector-collapsed{grid-template-columns:minmax(0,1fr) max-content}
+.graph-inspector.is-collapsed{padding:12px}.graph-inspector.is-collapsed .graph-inspector-body{display:none}
+.graph-inspector-head,.graph-depth-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.graph-depth-controls{justify-content:flex-start;margin-bottom:12px}.graph-depth-controls p{margin-right:auto}
+.graph-control.is-active{border-color:#4b9cf3;background:#233951;color:#fff}
+.graph-evidence{margin:8px 0;padding:8px;border:1px solid #354458;border-radius:5px}
+.graph-evidence summary{font-size:12px;cursor:pointer}.graph-evidence p{font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.graph-node{cursor:pointer}.graph-relation summary{cursor:pointer}
+@media(max-width:940px){.graph-workspace,.graph-workspace.inspector-collapsed{grid-template-columns:1fr}}
