@@ -7,6 +7,8 @@ import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { auditWebsite } from './lib/website-audit.mjs';
 import { nationalLookup } from './lib/national-schools.mjs';
+import { nearbySchools } from './lib/nearby-schools.mjs';
+import {getPilotKey,queryPlaces,usage,checkPilotInput} from './lib/google-places-pilot.mjs';
 import { validateAuditRequest } from './lib/live-audit.mjs';
 import { runAudit } from './lib/runner.mjs';
 import { openRegistry, listSchools, matchCandidate, sourceWebsite } from './lib/registry.mjs';
@@ -16,7 +18,8 @@ const archive = join(homedir(), '.schoolvis', 'audits');
 const assets = new Map([
   ['/', ['index.html','text/html; charset=utf-8']], ['/index.html',['index.html','text/html; charset=utf-8']],
   ['/website.js',['website.js','text/javascript; charset=utf-8']],
-  ['/styles.css',['styles.css','text/css; charset=utf-8']], ['/national-picker.js',['national-picker.js','text/javascript; charset=utf-8']], ['/workflow.js',['workflow.js','text/javascript; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']], ['/console.js',['console.js','text/javascript; charset=utf-8']],
+  ['/places-pilot.js',['places-pilot.js','text/javascript; charset=utf-8']],
+  ['/nearby-picker.js',['nearby-picker.js','text/javascript; charset=utf-8']], ['/styles.css',['styles.css','text/css; charset=utf-8']], ['/national-picker.js',['national-picker.js','text/javascript; charset=utf-8']], ['/workflow.js',['workflow.js','text/javascript; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']], ['/console.js',['console.js','text/javascript; charset=utf-8']],
   ['/school-picker.js',['school-picker.js','text/javascript; charset=utf-8']],
   ['/lib/fuzzy-schools.mjs',['lib/fuzzy-schools.mjs','text/javascript; charset=utf-8']],
   ['/lib/analysis.mjs',['lib/analysis.mjs','text/javascript; charset=utf-8']],
@@ -55,6 +58,17 @@ const server=createServer(async(req,res)=>{
  const allowedHost = new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
  if (!allowedHost.has(req.headers.host)) { json(res,403,{error:'Local host only'});return; }
  if (path.startsWith('/api/')) {
+  if(req.method==='GET'&&path==='/api/places-pilot-status'){json(res,200,{configured:!!(await getPilotKey(root)),usage:await usage()});return;}
+  if(req.method==='POST'&&path==='/api/places-pilot'){
+   const origin=req.headers.origin;if(origin&&!['http://127.0.0.1:'+port,'http://localhost:'+port].includes(origin)){json(res,403,{error:'Invalid origin'});return;}
+   if(req.headers['content-type']?.split(';')[0]!=='application/json'){json(res,415,{error:'JSON required'});return;}
+   try{const input=checkPilotInput(await bodyJson(req));json(res,200,await queryPlaces(input,await getPilotKey(root)));}
+   catch(e){json(res,400,{error:e.message});}return;
+  }
+
+  if(req.method==='GET'&&path==='/api/nearby-schools'){
+   try { const u=new URL(req.url,`http://127.0.0.1:${port}`);json(res,200,nearbySchools(u.searchParams.get('id'),Number(u.searchParams.get('radius')||25))); }catch(e){json(res,400,{error:e.message});}return;
+  }
   if(req.method==='GET'&&path==='/api/national-schools'){
    try{const u=new URL(req.url,`http://127.0.0.1:${port}`);json(res,200,nationalLookup(u.searchParams.get('q')||''));}
    catch(e){json(res,400,{error:e.message});}return;
