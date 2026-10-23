@@ -206,3 +206,17 @@ python3 scripts/import-mdc-locations.py ~/Downloads/mdc-school-addresses.csv --g
 ```
 
 The script calls the public US Census Geocoder (no API key, subject to service availability and usage policy), rejects ambiguous matches, stores source URLs and method in local `~/.schoolvis/schools.sqlite`, and labels all results `geocoded_unverified`. Alternatively, CSV columns `lat,lon,geocode_source` can be supplied without `--geocode` where externally validated coordinates are available. Nothing overwrites previously saved audit results. Coordinate coverage is clearly indicated in the UI. This is an honest partial-coverage pilot until address enrichment is completed.
+
+### v0.11.6 Baltimore location starter cohort
+
+The file `data/locations/baltimore-sourced-addresses.csv` contains **19 address candidates** matched to the regional registry by stable school ID, supported by institutional websites, the Maryland State Department of Education nonpublic-school directory, or the AIMS public member page. They include Mount Saint Joseph, Gilman, McDonogh, Loyola Blakefield, Bryn Mawr, and other Baltimore-area institutions. Addresses are evidence-backed but **not geocoded yet** and may require institutional review. No latitude/longitude values have been invented.
+
+After running `npm start` at least once to initialize the local school registry, stop the server and run:
+
+```bash
+python3 scripts/import-mdc-locations.py data/locations/baltimore-sourced-addresses.csv --geocode
+```
+
+This calls the U.S. Census Geocoder for each address (no API key), accepts only unique matches within the pilot bounds, and saves matching coordinates and original address source URLs into `~/.schoolvis/schools.sqlite`. Then run `npm start` again and choose Mount Saint Joseph in the Nearby Schools picker. The output explicitly reports skipped/unmatched addresses. Google Maps, Wikipedia ShareAlike data, and the discontinued national import are not required.
+
+The remaining regional schools need additional sourced addresses, and the Maryland/DC dataset is a partial pilot, not a complete verified member roster. Distances are straight-line, not driving distances.

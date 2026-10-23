@@ -1,0 +1,4 @@
+school_id,school_name,reason,proposed_name,confidence,runner_up,proposed_address,source_url
+mdc-holy-trinity-school-prince-george-s-county,Holy Trinity School,needs_identity_review,Holy Trinity Episcopal Day School,0.917,0.737,11902 Daisy Lane,https://cdn.ymaws.com/www.aimsmddc.org/resource/resmgr/aimsmembership/new_2024-25_aims_school_dire.pdf
+mdc-seneca-academy-and-circle-school-montgomery-county,Seneca Academy and Circle School,needs_identity_review,Seneca Academy,0.800,0.609,15601 Germantown Road,https://cdn.ymaws.com/www.aimsmddc.org/resource/resmgr/aimsmembership/new_2024-25_aims_school_dire.pdf
+mdc-sidwell-friends-school-lower-school-montgomery-county,Sidwell Friends School (Lower School),needs_identity_review,Sandy Spring Friends School,0.571,0.500,16923 Norwood Road,https://cdn.ymaws.com/www.aimsmddc.org/resource/resmgr/aimsmembership/new_2024-25_aims_school_dire.pdf
