@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
+import { auditWebsite } from './lib/website-audit.mjs';
 import { validateAuditRequest } from './lib/live-audit.mjs';
 import { runAudit } from './lib/runner.mjs';
 import { openRegistry, listSchools, matchCandidate, sourceWebsite } from './lib/registry.mjs';
@@ -13,6 +14,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const archive = join(homedir(), '.schoolvis', 'audits');
 const assets = new Map([
   ['/', ['index.html','text/html; charset=utf-8']], ['/index.html',['index.html','text/html; charset=utf-8']],
+  ['/website.js',['website.js','text/javascript; charset=utf-8']],
   ['/styles.css',['styles.css','text/css; charset=utf-8']], ['/workflow.js',['workflow.js','text/javascript; charset=utf-8']], ['/app.js',['app.js','text/javascript; charset=utf-8']], ['/console.js',['console.js','text/javascript; charset=utf-8']],
   ['/school-picker.js',['school-picker.js','text/javascript; charset=utf-8']],
   ['/lib/fuzzy-schools.mjs',['lib/fuzzy-schools.mjs','text/javascript; charset=utf-8']],
@@ -52,6 +54,13 @@ const server=createServer(async(req,res)=>{
  const allowedHost = new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
  if (!allowedHost.has(req.headers.host)) { json(res,403,{error:'Local host only'});return; }
  if (path.startsWith('/api/')) {
+  if(req.method==='POST'&&path==='/api/website-check'){
+   const origin=req.headers.origin;
+   if(origin&&!['http://127.0.0.1:'+port,'http://localhost:'+port].includes(origin)){json(res,403,{error:'Invalid origin'});return;}
+   if(req.headers['content-type']?.split(';')[0]!=='application/json'){json(res,415,{error:'JSON required'});return;}
+   try{const body=await bodyJson(req);json(res,200,{result:await auditWebsite(body.url)});}catch(e){json(res,400,{error:e.message});}return;
+  }
+
   if (req.method==='GET' && path==='/api/schools') {
     try { const u=new URL(req.url,`http://127.0.0.1:${port}`);const schools=listSchools(registry,{query:u.searchParams.get('q')||'',county:u.searchParams.get('county')||'',highSchool:u.searchParams.get('highSchool')==='true'});json(res,200,{schools:schools.map(s=>({...s,quality:schoolQuality(registry,s.id),review:getSchoolReview(registry,s.id),publishedWebsite:sourceWebsite(registry,s.id)})),total:schools.length,source:'Wikipedia seed; AIMS public directory snapshot overlay',reconciliation:{...reconciliation,unmatchedCount:reconciliation.unmatched.length},quality:registryQualitySummary(registry)});}
     catch(e){json(res,400,{error:e.message});}return;

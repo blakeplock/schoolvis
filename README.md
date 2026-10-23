@@ -188,3 +188,7 @@ Step 3 (Configure an audit) contains the discovered-school enrollment, affiliati
 ## v0.10 — Discoverability dashboard reset
 
 The customer UI is now one dashboard with optional school/audit setup. Search ranking and website-health categories explicitly report “Not measured” until suitable collectors are implemented. Existing AI audit and local registry behavior is retained. Earlier graph and academic-analysis controls are retained in the code for archive compatibility, but are not exposed as marketing features.
+
+## v0.11 website checks
+
+Opt-in HTTPS homepage metadata and robots.txt checks can be run locally. No AI requests are used. Requests are DNS-pinned and block private or unsupported address ranges; redirects are never followed. The result is a snapshot, not a search ranking, indexing verification, Lighthouse audit, or security certification. Search rankings remain unavailable pending a vetted provider.
